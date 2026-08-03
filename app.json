@@ -39,6 +39,18 @@
           "initialOrientation": "LANDSCAPE"
         }
       ]
-    ]
+    ],
+    "updates": {
+      "url": "https://u.expo.dev/71f01f1a-03fe-414d-8cd6-22b516ffe23d",
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": "1.5.0",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "71f01f1a-03fe-414d-8cd6-22b516ffe23d"
+      }
+    },
+    "owner": "mike008"
   }
 }
