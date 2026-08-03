@@ -1,4 +1,4 @@
-package com.fingerstrike.app
+package com.mike008.legostriker
 
 import android.os.Build
 import android.os.Bundle

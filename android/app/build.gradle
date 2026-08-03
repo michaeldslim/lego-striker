@@ -87,16 +87,35 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.fingerstrike.app'
+    namespace 'com.mike008.legostriker'
     defaultConfig {
-        applicationId 'com.fingerstrike.app'
+        applicationId 'com.mike008.legostriker'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 150
-        versionName "1.5.0"
+        versionName "1.6.0"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            outputFileName = "Legostriker-${outputFileName}"
+        }
+    }
+    // Rename AAB output (bundleRelease) to match APK naming convention
+    tasks.whenTaskAdded { task ->
+        if (task.name == 'bundleRelease') {
+            task.doLast {
+                def aabDir = file("${buildDir}/outputs/bundle/release")
+                def oldFile = new File(aabDir, 'app-release.aab')
+                def newFile = new File(aabDir, 'Legostriker-app-release.aab')
+                if (oldFile.exists()) {
+                    oldFile.renameTo(newFile)
+                }
+            }
+        }
+    }
+
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
