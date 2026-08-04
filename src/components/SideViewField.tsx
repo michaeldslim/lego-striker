@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, G, Line, LinearGradient, Rect, Stop, Text as SvgText } from 'react-native-svg';
 import { GK_BAR_LENGTH_RATIO, GK_BAR_THICKNESS } from '../constants/game';
 import { colors } from '../constants/theme';
+import { BallSkin } from '../types/customize';
 import { Ball, Character, FieldBounds, GamePhase, Turn } from '../types/game';
 import { computeAimPower } from '../utils/power';
 import { useChargeTick } from '../hooks/useChargeTick';
@@ -25,6 +26,7 @@ interface Props {
   activeCharacterId: string | null;
   turn: Turn;
   phase: GamePhase;
+  ballSkin?: BallSkin;
 }
 
 export function SideViewField({
@@ -42,6 +44,7 @@ export function SideViewField({
   activeCharacterId,
   turn,
   phase,
+  ballSkin = 'legacy',
 }: Props) {
   const { goalZone } = field;
   const goalTop = goalZone.top;
@@ -170,7 +173,7 @@ export function SideViewField({
           />
         </G>
 
-        <SoccerBall x={ball.x} y={ball.y} radius={ball.radius} />
+        <SoccerBall x={ball.x} y={ball.y} radius={ball.radius} variant={ballSkin} />
 
         {characters.map((ch) => {
           const isPlayerCharging =
