@@ -227,9 +227,9 @@ Select on home screen → save to `AsyncStorage` → apply in game.
 
 | variant | Description |
 |---------|-------------|
-| `classic` | White base + black pentagon pattern (default) |
-| `neon` | Neon theme solid + highlight |
-| `lego` | Lego stud-style circular bumps |
+| `legacy` | White base + black pentagon pattern (default) |
+| `pl` | Premier League–style purple / magenta / blue geometry |
+| `worldcup` | World Cup–style bold black panels + red / green / gold accents |
 
 - Same collision radius & friction — **visual only**
 - Ball preview thumbnails on home + tap-to-select UI
@@ -269,13 +269,13 @@ Select on home screen → save to `AsyncStorage` → apply in game.
 
 ### v1.4 Checklist
 
-- [ ] Uniform color picker UI (home)
-- [ ] 2–3 ball designs + selection UI
+- [x] Uniform color picker UI (home)
+- [x] 2–3 ball designs + selection UI
 - [ ] Country picker UI + flag assets (8–12 countries)
 - [ ] Bottom-left field flag watermark (faded)
-- [ ] Persist selections in AsyncStorage
-- [ ] Apply selected skins on game & result screens
-- [ ] Types / constants / `game-plan` updated
+- [x] Persist selections in AsyncStorage
+- [x] Apply selected uniform colors in game
+- [x] Types / constants / `game-plan` updated
 
 ## v1.5 Feedback — Sound & Haptics
 
