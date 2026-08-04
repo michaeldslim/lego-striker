@@ -15,6 +15,7 @@ import { SquadPicker } from '../src/components/SquadPicker';
 import { BallSkinPicker } from '../src/components/BallSkinPicker';
 import { CountryPicker } from '../src/components/CountryPicker';
 import { UniformColorPicker } from '../src/components/UniformColorPicker';
+import { HomeHeroLogo } from '../src/components/HomeHeroLogo';
 import { DEFAULT_SQUAD_SIZE } from '../src/constants/game';
 import { DEFAULT_BALL_SKIN, DEFAULT_COUNTRY, DEFAULT_PLAYER_COLORS } from '../src/constants/skins';
 import { colors, spacing } from '../src/constants/theme';
@@ -81,7 +82,9 @@ export default function HomeScreen() {
         <View style={styles.heroPanel}>
           <View style={styles.heroContent}>
             <View style={styles.logoBlock}>
-              <Animated.Text style={[styles.emoji, heroStyle]}>🧍⚽</Animated.Text>
+              <Animated.View style={[styles.heroLogo, heroStyle]}>
+                <HomeHeroLogo teamColors={teamColors} ballSkin={ballSkin} />
+              </Animated.View>
               <Text style={styles.title}>LEGO</Text>
               <Text style={styles.titleAccent}>STRIKER</Text>
               {wins > 0 && (
@@ -172,8 +175,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xs,
     alignItems: 'center',
   },
-  emoji: {
-    fontSize: 36,
+  heroLogo: {
     marginBottom: 4,
   },
   title: {
