@@ -37,7 +37,6 @@
     "android:device": "expo run:android --device",
     "ios": "expo run:ios",
     "ios:device": "expo run:ios --device",
-    "web": "expo start --web",
     "prebuild": "expo prebuild",
     "prebuild:clean": "expo prebuild --clean"
   },
