@@ -4,6 +4,8 @@ import {
   MIN_KICK_SPEED,
   TEAM_COLORS,
 } from '../constants/game';
+import { DEFAULT_PLAYER_COLORS } from '../constants/skins';
+import { TeamColors } from '../types/customize';
 import { Ball, Character, FieldBounds, Gender, SquadSize, Team } from '../types/game';
 import { createGkBars } from './gk';
 import { computeBoardLayout, getGoalZone } from './layout';
@@ -32,9 +34,10 @@ function makeCharacter(
   team: Team,
   gender: Gender,
   x: number,
-  y: number
+  y: number,
+  playerColors?: TeamColors
 ): Character {
-  const colors = TEAM_COLORS[team];
+  const colors = team === 'player' ? (playerColors ?? DEFAULT_PLAYER_COLORS) : TEAM_COLORS.ai;
   return {
     id,
     team,
@@ -54,7 +57,8 @@ function createTeamCharacters(
   prefix: string,
   fieldX: number,
   field: FieldBounds,
-  squadSize: SquadSize
+  squadSize: SquadSize,
+  playerColors?: TeamColors
 ): Character[] {
   const { height } = field;
   const cy = height / 2;
@@ -66,14 +70,19 @@ function createTeamCharacters(
       team,
       index === 0 ? 'female' : 'male',
       field.width * fieldX,
-      cy + height * offset
+      cy + height * offset,
+      playerColors
     )
   );
 }
 
-export function createInitialCharacters(field: FieldBounds, squadSize: SquadSize = 2): Character[] {
+export function createInitialCharacters(
+  field: FieldBounds,
+  squadSize: SquadSize = 2,
+  playerColors: TeamColors = DEFAULT_PLAYER_COLORS
+): Character[] {
   return [
-    ...createTeamCharacters('player', 'p', 0.22, field, squadSize),
+    ...createTeamCharacters('player', 'p', 0.22, field, squadSize, playerColors),
     ...createTeamCharacters('ai', 'a', 0.78, field, squadSize),
   ];
 }
@@ -90,11 +99,12 @@ export function createInitialBall(field: FieldBounds): Ball {
 
 export function resetAfterGoal(
   field: FieldBounds,
-  squadSize: SquadSize
+  squadSize: SquadSize,
+  playerColors: TeamColors = DEFAULT_PLAYER_COLORS
 ): { ball: Ball; characters: Character[] } {
   return {
     ball: createInitialBall(field),
-    characters: createInitialCharacters(field, squadSize),
+    characters: createInitialCharacters(field, squadSize, playerColors),
   };
 }
 

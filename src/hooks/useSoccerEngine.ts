@@ -9,6 +9,8 @@ import {
   SAVE_MESSAGE_MS,
   SETTLE_THRESHOLD,
 } from '../constants/game';
+import { DEFAULT_PLAYER_COLORS } from '../constants/skins';
+import { TeamColors } from '../types/customize';
 import {
   Ball,
   Character,
@@ -68,17 +70,23 @@ export interface SoccerState {
   field: FieldBounds;
   boardSize: { width: number; height: number };
   squadSize: SquadSize;
+  playerColors: TeamColors;
   message: string | null;
   lastGoalScorer: 'player' | 'ai' | null;
 }
 
-function buildInitialState(viewWidth: number, viewHeight: number, squadSize: SquadSize): SoccerState {
+function buildInitialState(
+  viewWidth: number,
+  viewHeight: number,
+  squadSize: SquadSize,
+  playerColors: TeamColors = DEFAULT_PLAYER_COLORS
+): SoccerState {
   const boardSize = getBoardSize(viewWidth, viewHeight);
   const field = getFieldBounds(boardSize.width, boardSize.height);
   const gkBars = createGkBars(field);
   return {
     ball: createInitialBall(field),
-    characters: createInitialCharacters(field, squadSize),
+    characters: createInitialCharacters(field, squadSize, playerColors),
     gkBars,
     gkBarYs: {
       player: getGkBarCenterY('player', field.goalZone, 0),
@@ -100,6 +108,7 @@ function buildInitialState(viewWidth: number, viewHeight: number, squadSize: Squ
     field,
     boardSize,
     squadSize,
+    playerColors,
     message: null,
     lastGoalScorer: null,
   };
@@ -115,7 +124,13 @@ export function useSoccerEngine() {
   const lastTickRef = useRef<number | null>(null);
   const saveMessageRef = useRef(false);
 
-  const startGame = useCallback((viewWidth: number, viewHeight: number, squadSize: SquadSize = 2) => {
+  const startGame = useCallback(
+    (
+      viewWidth: number,
+      viewHeight: number,
+      squadSize: SquadSize = 2,
+      playerColors: TeamColors = DEFAULT_PLAYER_COLORS
+    ) => {
     if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
     if (goalTimerRef.current) clearTimeout(goalTimerRef.current);
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -123,7 +138,7 @@ export function useSoccerEngine() {
     elapsedRef.current = 0;
     lastTickRef.current = null;
     saveMessageRef.current = false;
-    setState(buildInitialState(viewWidth, viewHeight, squadSize));
+    setState(buildInitialState(viewWidth, viewHeight, squadSize, playerColors));
   }, []);
 
   const runAiTurn = useCallback(() => {
@@ -305,7 +320,7 @@ export function useSoccerEngine() {
         if (s.isFinished) {
           return { ...s, phase: 'aiming', message: s.winner === 'player' ? '승리!' : '패배...' };
         }
-        const reset = resetAfterGoal(s.field, s.squadSize);
+        const reset = resetAfterGoal(s.field, s.squadSize, s.playerColors);
         const kickoffTeam = s.lastGoalScorer === 'player' ? 'ai' : 'player';
         return {
           ...s,
