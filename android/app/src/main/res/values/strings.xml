@@ -1,4 +1,4 @@
 <resources>
   <string name="app_name">Lego Striker</string>
-  <string name="expo_runtime_version">1.6.0</string>
+  <string name="expo_runtime_version">1.9.0</string>
 </resources>
