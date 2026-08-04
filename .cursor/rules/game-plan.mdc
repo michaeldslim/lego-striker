@@ -49,6 +49,30 @@ A **2D side-view flick soccer** game in the Football Striker style. Flick Lego m
 - **Game / Result**: landscape locked (`expo-screen-orientation` or `app.json`)
 - **v1.4**: selected country flag shown as a subtle watermark in the bottom-left of the field
 
+### Home Screen (landscape-friendly two-column layout)
+
+```
+┌─────────────────────────────┬──────────────────┐
+│                             │  팀 인원           │
+│        🧍⚽                  │  유니폼 색         │
+│        LEGO                 │  공 디자인  ← scroll│
+│       STRIKER               │                  │
+│                             │  나라 (flags)     │
+│     [ KICK OFF ]            │                  │
+│     [ LEADERBOARD ]         │                  │
+│   ← hero (flex, centered)   │  menu (320px)    │
+└─────────────────────────────┴──────────────────┘
+```
+
+| Zone | Content |
+|------|---------|
+| **Left hero panel** (`flex: 1`) | Animated logo, win count, **KICK OFF** + **LEADERBOARD** — vertically & horizontally centered in remaining width |
+| **Right menu column** (`width: 320`) | Scrollable **SquadPicker**, **UniformColorPicker**, **BallSkinPicker** (compact) · **CountryPicker** pinned at bottom |
+
+- Selections persist via `loadPreferences` / `savePreferences` (`AsyncStorage`)
+- Hero content max width ~280px; action buttons stretch full hero width
+- Implemented in `app/index.tsx`
+
 ---
 
 ## Game Objects
@@ -212,7 +236,7 @@ Rendered **above** characters and ball (not obscured).
 - [x] Gauge tracks drag outside field (`shouldCancelWhenOutside(false)`)
 - [x] `game-plan` / constants / `power.ts` updated
 
-## v1.4 Customization (next)
+## v1.4 Customization
 
 Select on home screen → save to `AsyncStorage` → apply in game.
 
@@ -258,12 +282,13 @@ Select on home screen → save to `AsyncStorage` → apply in game.
 
 - Flag is **decorative only** — no collision or physics
 - AI team flag not shown in v1.4 (player identity only)
-- Home Customize: flag grid picker + selected country name label
+- Home: flag grid picker + selected country name label (bottom of right menu column)
 
 ### Implementation Notes
-- Types: `BallSkin`, `TeamColors`, `CountryCode` → `src/types/game.ts` or `src/types/customize.ts`
+- Types: `BallSkin`, `TeamColors`, `CountryCode` → `src/types/customize.ts`
 - Storage: `src/utils/storage.ts` (`loadPreferences` / `savePreferences`)
-- UI: **Customize** section beside home `SquadPicker` (compact horizontal layout)
+- Home UI (`app/index.tsx`): two-column layout — hero (logo + actions) left, customize menu (320px) right
+- Pickers: `SquadPicker`, `UniformColorPicker`, `BallSkinPicker` (scroll) + `CountryPicker` (pinned bottom)
 - Constants: `src/constants/skins.ts` — palette, ball variants, country list
 - Component: `FieldFlagWatermark` — placed inside `SideViewField`
 
@@ -275,6 +300,7 @@ Select on home screen → save to `AsyncStorage` → apply in game.
 - [x] Bottom-left field flag watermark (faded)
 - [x] Persist selections in AsyncStorage
 - [x] Apply selected uniform colors in game
+- [x] Home layout — hero (logo + KICK OFF / LEADERBOARD) left, customize menu right
 - [x] Types / constants / `game-plan` updated
 
 ## v1.5 Feedback — Sound & Haptics
@@ -361,8 +387,8 @@ Short, upbeat tones suited to casual turn-based play. Not overwhelming; repeatab
 | **v1.1** | Landscape mode + goalkeeper bar | ✅ Done |
 | **v1.2** | Squad size 2/3 selection | ✅ Done |
 | **v1.3** | Hold charging, circular power/aim UI, cancel, kick-ready pose, AI wind-up | ✅ Done |
-| **v1.4** | Uniform colors, ball design, country selection & field flag | 🔜 Next |
-| **v1.5** | Sound SFX, haptic extensions, mute & haptics settings | |
+| **v1.4** | Uniform colors, ball design, country selection, field flag & home layout | ✅ Done |
+| **v1.5** | Sound SFX, haptic extensions, mute & haptics settings | 🔜 Next |
 | **v2** | League mode, achievements, difficulty presets, field themes | |
 
 **Out of scope (not planned)**: 2P local, online multiplayer

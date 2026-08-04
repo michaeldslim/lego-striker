@@ -68,7 +68,6 @@ export function parseBallSkin(raw: unknown): BallSkin {
 export const UNIFORM_KITS: UniformKit[] = [
   { id: 'cyan', label: 'Cyan', shirt: '#00b4d8', pants: '#0077b6' },
   { id: 'gold', label: 'Gold', shirt: '#ffd60a', pants: '#9a6700' },
-  { id: 'neon', label: 'Neon', shirt: '#39ff14', pants: '#1a7a0a' },
   { id: 'blue', label: 'Blue', shirt: '#2563eb', pants: '#1e3a8a' },
   { id: 'red', label: 'Red', shirt: '#e63946', pants: '#1a1a1a' },
   { id: 'orange', label: 'Orange', shirt: '#ff8500', pants: '#c2410c' },

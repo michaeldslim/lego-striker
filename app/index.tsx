@@ -90,7 +90,16 @@ export default function HomeScreen() {
                 </View>
               )}
             </View>
-            <CountryPicker value={countryCode} onChange={handleCountryChange} />
+            <View style={styles.actions}>
+              <NeonButton title="KICK OFF" onPress={startGame} compact style={styles.actionButton} />
+              <NeonButton
+                title="LEADERBOARD"
+                variant="secondary"
+                compact
+                style={styles.actionButton}
+                onPress={() => router.push('/leaderboard')}
+              />
+            </View>
           </View>
         </View>
 
@@ -106,14 +115,8 @@ export default function HomeScreen() {
             <BallSkinPicker value={ballSkin} onChange={handleBallSkinChange} compact />
           </ScrollView>
 
-          <View style={styles.actions}>
-            <NeonButton title="KICK OFF" onPress={startGame} compact />
-            <NeonButton
-              title="LEADERBOARD"
-              variant="secondary"
-              compact
-              onPress={() => router.push('/leaderboard')}
-            />
+          <View style={styles.countrySection}>
+            <CountryPicker value={countryCode} onChange={handleCountryChange} />
           </View>
         </View>
       </View>
@@ -136,18 +139,18 @@ const styles = StyleSheet.create({
   },
   heroContent: {
     alignItems: 'center',
+    alignSelf: 'center',
     gap: spacing.md,
-    maxWidth: '100%',
-    paddingHorizontal: spacing.xs,
-    flexShrink: 1,
+    width: '100%',
+    maxWidth: 280,
   },
   logoBlock: {
     alignItems: 'center',
+    width: '100%',
   },
   menuColumn: {
-    flex: 1,
-    minWidth: 0,
-    maxWidth: 300,
+    width: 320,
+    flexShrink: 0,
   },
   scrollArea: {
     flex: 1,
@@ -158,8 +161,16 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexShrink: 0,
+    alignSelf: 'stretch',
     gap: spacing.xs,
+  },
+  actionButton: {
+    alignSelf: 'stretch',
+  },
+  countrySection: {
+    flexShrink: 0,
     paddingTop: spacing.xs,
+    alignItems: 'center',
   },
   emoji: {
     fontSize: 36,
@@ -171,6 +182,8 @@ const styles = StyleSheet.create({
     color: colors.white,
     letterSpacing: 3,
     lineHeight: 30,
+    textAlign: 'center',
+    width: '100%',
   },
   titleAccent: {
     fontSize: 26,
@@ -178,6 +191,8 @@ const styles = StyleSheet.create({
     color: colors.neonGold,
     letterSpacing: 3,
     lineHeight: 30,
+    textAlign: 'center',
+    width: '100%',
     textShadowColor: colors.neonGold,
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 16,
