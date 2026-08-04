@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -9,8 +9,11 @@ import { HUD } from '../src/components/HUD';
 import { useScreenPadding } from '../src/hooks/useScreenPadding';
 import { useSoccerEngine } from '../src/hooks/useSoccerEngine';
 import { GOALS_TO_WIN } from '../src/constants/game';
+import { DEFAULT_BALL_SKIN, DEFAULT_PLAYER_COLORS } from '../src/constants/skins';
 import { spacing } from '../src/constants/theme';
+import { BallSkin, TeamColors } from '../src/types/customize';
 import { SquadSize } from '../src/types/game';
+import { loadPreferences } from '../src/utils/storage';
 
 function parseSquadSize(value: string | string[] | undefined): SquadSize {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -27,6 +30,27 @@ export default function GameScreen() {
   const gameInitRef = useRef(false);
   const boardRef = useRef<View>(null);
   const boardOriginRef = useRef({ x: 0, y: 0 });
+  const layoutSizeRef = useRef<{ width: number; height: number } | null>(null);
+  const playerColorsRef = useRef<TeamColors>(DEFAULT_PLAYER_COLORS);
+  const [ballSkin, setBallSkin] = useState<BallSkin>(DEFAULT_BALL_SKIN);
+  const prefsReadyRef = useRef(false);
+
+  const tryStartGame = useCallback(() => {
+    if (gameInitRef.current || !prefsReadyRef.current || !layoutSizeRef.current) return;
+    gameInitRef.current = true;
+    navigatedRef.current = false;
+    const { width, height } = layoutSizeRef.current;
+    startGame(Math.round(width), Math.round(height), squadSize, playerColorsRef.current);
+  }, [squadSize, startGame]);
+
+  useEffect(() => {
+    loadPreferences().then((prefs) => {
+      playerColorsRef.current = prefs.teamColors;
+      setBallSkin(prefs.ballSkin);
+      prefsReadyRef.current = true;
+      tryStartGame();
+    });
+  }, [tryStartGame]);
 
   const syncBoardOrigin = useCallback(() => {
     boardRef.current?.measureInWindow((x, y) => {
@@ -60,11 +84,9 @@ export default function GameScreen() {
 
   const handleBoardLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
-    if (width <= 0 || height <= 0 || gameInitRef.current) return;
-
-    gameInitRef.current = true;
-    navigatedRef.current = false;
-    startGame(Math.round(width), Math.round(height), squadSize);
+    if (width <= 0 || height <= 0) return;
+    layoutSizeRef.current = { width, height };
+    tryStartGame();
   };
 
   useEffect(() => () => {
@@ -138,6 +160,7 @@ export default function GameScreen() {
                   activeCharacterId={state.activeCharacterId}
                   turn={state.turn}
                   phase={state.phase}
+                  ballSkin={ballSkin}
                 />
               </View>
             )}

@@ -12,21 +12,31 @@ import Animated, {
 import { ScreenBackground } from '../src/components/ScreenBackground';
 import { NeonButton } from '../src/components/NeonButton';
 import { SquadPicker } from '../src/components/SquadPicker';
+import { BallSkinPicker } from '../src/components/BallSkinPicker';
+import { UniformColorPicker } from '../src/components/UniformColorPicker';
 import { DEFAULT_SQUAD_SIZE } from '../src/constants/game';
-import { colors, fonts, spacing } from '../src/constants/theme';
+import { DEFAULT_BALL_SKIN, DEFAULT_PLAYER_COLORS } from '../src/constants/skins';
+import { colors, spacing } from '../src/constants/theme';
+import { BallSkin, TeamColors } from '../src/types/customize';
 import { SquadSize } from '../src/types/game';
-import { getSquadSize, getWinCount, setSquadSize } from '../src/utils/storage';
+import { getWinCount, loadPreferences, savePreferences } from '../src/utils/storage';
 
 export default function HomeScreen() {
   const router = useRouter();
   const screenPadding = useScreenPadding();
   const [wins, setWins] = useState(0);
   const [squadSize, setSquadSizeState] = useState<SquadSize>(DEFAULT_SQUAD_SIZE);
+  const [teamColors, setTeamColors] = useState<TeamColors>(DEFAULT_PLAYER_COLORS);
+  const [ballSkin, setBallSkin] = useState<BallSkin>(DEFAULT_BALL_SKIN);
   const bounce = useSharedValue(0);
 
   useEffect(() => {
     getWinCount().then(setWins);
-    getSquadSize().then(setSquadSizeState);
+    loadPreferences().then((prefs) => {
+      setSquadSizeState(prefs.squadSize);
+      setTeamColors(prefs.teamColors);
+      setBallSkin(prefs.ballSkin);
+    });
     bounce.value = withRepeat(
       withSequence(withTiming(-8, { duration: 700 }), withTiming(0, { duration: 700 })),
       -1,
@@ -40,7 +50,17 @@ export default function HomeScreen() {
 
   const handleSquadChange = (size: SquadSize) => {
     setSquadSizeState(size);
-    setSquadSize(size);
+    savePreferences({ squadSize: size });
+  };
+
+  const handleTeamColorsChange = (colors: TeamColors) => {
+    setTeamColors(colors);
+    savePreferences({ teamColors: colors });
+  };
+
+  const handleBallSkinChange = (skin: BallSkin) => {
+    setBallSkin(skin);
+    savePreferences({ ballSkin: skin });
   };
 
   const startGame = () => {
@@ -51,14 +71,16 @@ export default function HomeScreen() {
     <ScreenBackground>
       <View style={[styles.root, screenPadding]}>
         <View style={styles.heroPanel}>
-          <Animated.Text style={[styles.emoji, heroStyle]}>🧍⚽</Animated.Text>
-          <Text style={styles.title}>LEGO</Text>
-          <Text style={styles.titleAccent}>STRIKER</Text>
-          {wins > 0 && (
-            <View style={styles.bestBox}>
-              <Text style={styles.bestLabel}>WINS {wins}</Text>
-            </View>
-          )}
+          <View style={styles.logoBlock}>
+            <Animated.Text style={[styles.emoji, heroStyle]}>🧍⚽</Animated.Text>
+            <Text style={styles.title}>LEGO</Text>
+            <Text style={styles.titleAccent}>STRIKER</Text>
+            {wins > 0 && (
+              <View style={styles.bestBox}>
+                <Text style={styles.bestLabel}>WINS {wins}</Text>
+              </View>
+            )}
+          </View>
         </View>
 
         <View style={styles.menuColumn}>
@@ -68,12 +90,9 @@ export default function HomeScreen() {
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
-            <View style={styles.tips}>
-              <Tip icon="👆" text="캐릭터 터치 → 당겨서 플릭" />
-              <Tip icon="⚽" text="상대 골대(오른쪽)에 넣기" />
-              <Tip icon="🏆" text="먼저 3골 승리" />
-            </View>
             <SquadPicker value={squadSize} onChange={handleSquadChange} compact />
+            <UniformColorPicker value={teamColors} onChange={handleTeamColorsChange} compact />
+            <BallSkinPicker value={ballSkin} onChange={handleBallSkinChange} compact />
           </ScrollView>
 
           <View style={styles.actions}>
@@ -91,21 +110,12 @@ export default function HomeScreen() {
   );
 }
 
-function Tip({ icon, text }: { icon: string; text: string }) {
-  return (
-    <View style={styles.tipRow}>
-      <Text style={styles.tipIcon}>{icon}</Text>
-      <Text style={styles.tipText}>{text}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   root: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'stretch',
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   heroPanel: {
     flex: 1,
@@ -113,10 +123,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minWidth: 0,
   },
+  logoBlock: {
+    alignItems: 'center',
+  },
   menuColumn: {
     flex: 1,
     minWidth: 0,
-    maxWidth: 340,
+    maxWidth: 300,
   },
   scrollArea: {
     flex: 1,
@@ -159,27 +172,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 2,
     fontWeight: '700',
-  },
-  tips: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    padding: spacing.sm,
-    gap: 4,
-  },
-  tipRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  tipIcon: {
-    fontSize: 14,
-    width: 20,
-  },
-  tipText: {
-    color: colors.textMuted,
-    fontSize: 11,
-    flex: 1,
   },
 });
