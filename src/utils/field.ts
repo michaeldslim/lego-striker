@@ -2,9 +2,8 @@ import {
   BALL_RADIUS,
   CHARACTER_RADIUS,
   MIN_KICK_SPEED,
-  TEAM_COLORS,
 } from '../constants/game';
-import { DEFAULT_PLAYER_COLORS } from '../constants/skins';
+import { DEFAULT_PLAYER_COLORS, pickAiTeamColors } from '../constants/skins';
 import { TeamColors } from '../types/customize';
 import { Ball, Character, FieldBounds, Gender, SquadSize, Team } from '../types/game';
 import { createGkBars } from './gk';
@@ -35,9 +34,8 @@ function makeCharacter(
   gender: Gender,
   x: number,
   y: number,
-  playerColors?: TeamColors
+  colors: TeamColors
 ): Character {
-  const colors = team === 'player' ? (playerColors ?? DEFAULT_PLAYER_COLORS) : TEAM_COLORS.ai;
   return {
     id,
     team,
@@ -58,7 +56,7 @@ function createTeamCharacters(
   fieldX: number,
   field: FieldBounds,
   squadSize: SquadSize,
-  playerColors?: TeamColors
+  colors: TeamColors
 ): Character[] {
   const { height } = field;
   const cy = height / 2;
@@ -71,7 +69,7 @@ function createTeamCharacters(
       index === 0 ? 'female' : 'male',
       field.width * fieldX,
       cy + height * offset,
-      playerColors
+      colors
     )
   );
 }
@@ -79,11 +77,12 @@ function createTeamCharacters(
 export function createInitialCharacters(
   field: FieldBounds,
   squadSize: SquadSize = 2,
-  playerColors: TeamColors = DEFAULT_PLAYER_COLORS
+  playerColors: TeamColors = DEFAULT_PLAYER_COLORS,
+  aiColors: TeamColors = pickAiTeamColors(playerColors)
 ): Character[] {
   return [
     ...createTeamCharacters('player', 'p', 0.22, field, squadSize, playerColors),
-    ...createTeamCharacters('ai', 'a', 0.78, field, squadSize),
+    ...createTeamCharacters('ai', 'a', 0.78, field, squadSize, aiColors),
   ];
 }
 
@@ -100,11 +99,12 @@ export function createInitialBall(field: FieldBounds): Ball {
 export function resetAfterGoal(
   field: FieldBounds,
   squadSize: SquadSize,
-  playerColors: TeamColors = DEFAULT_PLAYER_COLORS
+  playerColors: TeamColors = DEFAULT_PLAYER_COLORS,
+  aiColors: TeamColors = pickAiTeamColors(playerColors)
 ): { ball: Ball; characters: Character[] } {
   return {
     ball: createInitialBall(field),
-    characters: createInitialCharacters(field, squadSize, playerColors),
+    characters: createInitialCharacters(field, squadSize, playerColors, aiColors),
   };
 }
 

@@ -3,10 +3,11 @@ import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, G, Line, LinearGradient, Rect, Stop, Text as SvgText } from 'react-native-svg';
 import { GK_BAR_LENGTH_RATIO, GK_BAR_THICKNESS } from '../constants/game';
 import { colors } from '../constants/theme';
-import { BallSkin } from '../types/customize';
+import { BallSkin, CountryCode } from '../types/customize';
 import { Ball, Character, FieldBounds, GamePhase, Turn } from '../types/game';
 import { computeAimPower } from '../utils/power';
 import { useChargeTick } from '../hooks/useChargeTick';
+import { FieldFlagWatermark } from './FieldFlagWatermark';
 import { LegoCharacter } from './LegoCharacter';
 import { PowerGauge } from './PowerGauge';
 import { SoccerBall } from './SoccerBall';
@@ -27,6 +28,8 @@ interface Props {
   turn: Turn;
   phase: GamePhase;
   ballSkin?: BallSkin;
+  playerCountryCode?: CountryCode;
+  aiCountryCode?: CountryCode;
 }
 
 export function SideViewField({
@@ -45,12 +48,17 @@ export function SideViewField({
   turn,
   phase,
   ballSkin = 'legacy',
+  playerCountryCode,
+  aiCountryCode,
 }: Props) {
   const { goalZone } = field;
   const goalTop = goalZone.top;
   const goalBottom = goalZone.bottom;
   const goalH = goalBottom - goalTop;
   const barLength = goalZone.width * GK_BAR_LENGTH_RATIO;
+  const flagHeight = height * 0.055;
+  const flagPadX = width * 0.04;
+  const flagPadY = height * 0.05;
 
   const activeChar = characters.find((c) => c.id === activeCharacterId);
   const isCharging = !!(activeChar && aimStartTime && aimCurrent);
@@ -84,6 +92,25 @@ export function SideViewField({
             fill="rgba(0,0,0,0.06)"
           />
         ))}
+
+        {playerCountryCode && (
+          <FieldFlagWatermark
+            x={flagPadX}
+            y={flagPadY}
+            height={flagHeight}
+            code={playerCountryCode}
+            anchor="top-left"
+          />
+        )}
+        {aiCountryCode && (
+          <FieldFlagWatermark
+            x={width - flagPadX}
+            y={flagPadY}
+            height={flagHeight}
+            code={aiCountryCode}
+            anchor="top-right"
+          />
+        )}
 
         {/* Center line & circle */}
         <Line x1={width / 2} y1={0} x2={width / 2} y2={height} stroke="rgba(255,255,255,0.35)" strokeWidth={2} />

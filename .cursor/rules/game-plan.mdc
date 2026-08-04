@@ -271,8 +271,8 @@ Select on home screen → save to `AsyncStorage` → apply in game.
 
 - [x] Uniform color picker UI (home)
 - [x] 2–3 ball designs + selection UI
-- [ ] Country picker UI + flag assets (8–12 countries)
-- [ ] Bottom-left field flag watermark (faded)
+- [x] Country picker UI + flag assets (8–12 countries)
+- [x] Bottom-left field flag watermark (faded)
 - [x] Persist selections in AsyncStorage
 - [x] Apply selected uniform colors in game
 - [x] Types / constants / `game-plan` updated

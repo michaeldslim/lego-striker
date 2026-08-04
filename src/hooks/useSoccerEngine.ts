@@ -9,7 +9,7 @@ import {
   SAVE_MESSAGE_MS,
   SETTLE_THRESHOLD,
 } from '../constants/game';
-import { DEFAULT_PLAYER_COLORS } from '../constants/skins';
+import { DEFAULT_PLAYER_COLORS, pickAiTeamColors } from '../constants/skins';
 import { TeamColors } from '../types/customize';
 import {
   Ball,
@@ -71,6 +71,7 @@ export interface SoccerState {
   boardSize: { width: number; height: number };
   squadSize: SquadSize;
   playerColors: TeamColors;
+  aiColors: TeamColors;
   message: string | null;
   lastGoalScorer: 'player' | 'ai' | null;
 }
@@ -84,9 +85,10 @@ function buildInitialState(
   const boardSize = getBoardSize(viewWidth, viewHeight);
   const field = getFieldBounds(boardSize.width, boardSize.height);
   const gkBars = createGkBars(field);
+  const aiColors = pickAiTeamColors(playerColors);
   return {
     ball: createInitialBall(field),
-    characters: createInitialCharacters(field, squadSize, playerColors),
+    characters: createInitialCharacters(field, squadSize, playerColors, aiColors),
     gkBars,
     gkBarYs: {
       player: getGkBarCenterY('player', field.goalZone, 0),
@@ -109,6 +111,7 @@ function buildInitialState(
     boardSize,
     squadSize,
     playerColors,
+    aiColors,
     message: null,
     lastGoalScorer: null,
   };
@@ -320,7 +323,7 @@ export function useSoccerEngine() {
         if (s.isFinished) {
           return { ...s, phase: 'aiming', message: s.winner === 'player' ? '승리!' : '패배...' };
         }
-        const reset = resetAfterGoal(s.field, s.squadSize, s.playerColors);
+        const reset = resetAfterGoal(s.field, s.squadSize, s.playerColors, s.aiColors);
         const kickoffTeam = s.lastGoalScorer === 'player' ? 'ai' : 'player';
         return {
           ...s,

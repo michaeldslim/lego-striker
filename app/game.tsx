@@ -9,9 +9,9 @@ import { HUD } from '../src/components/HUD';
 import { useScreenPadding } from '../src/hooks/useScreenPadding';
 import { useSoccerEngine } from '../src/hooks/useSoccerEngine';
 import { GOALS_TO_WIN } from '../src/constants/game';
-import { DEFAULT_BALL_SKIN, DEFAULT_PLAYER_COLORS } from '../src/constants/skins';
+import { DEFAULT_BALL_SKIN, DEFAULT_COUNTRY, DEFAULT_PLAYER_COLORS, pickRandomCountry } from '../src/constants/skins';
 import { spacing } from '../src/constants/theme';
-import { BallSkin, TeamColors } from '../src/types/customize';
+import { BallSkin, CountryCode, TeamColors } from '../src/types/customize';
 import { SquadSize } from '../src/types/game';
 import { loadPreferences } from '../src/utils/storage';
 
@@ -33,6 +33,8 @@ export default function GameScreen() {
   const layoutSizeRef = useRef<{ width: number; height: number } | null>(null);
   const playerColorsRef = useRef<TeamColors>(DEFAULT_PLAYER_COLORS);
   const [ballSkin, setBallSkin] = useState<BallSkin>(DEFAULT_BALL_SKIN);
+  const [countryCode, setCountryCode] = useState<CountryCode>(DEFAULT_COUNTRY);
+  const [aiCountryCode, setAiCountryCode] = useState<CountryCode>(DEFAULT_COUNTRY);
   const prefsReadyRef = useRef(false);
 
   const tryStartGame = useCallback(() => {
@@ -47,6 +49,8 @@ export default function GameScreen() {
     loadPreferences().then((prefs) => {
       playerColorsRef.current = prefs.teamColors;
       setBallSkin(prefs.ballSkin);
+      setCountryCode(prefs.countryCode);
+      setAiCountryCode(pickRandomCountry(prefs.countryCode));
       prefsReadyRef.current = true;
       tryStartGame();
     });
@@ -161,6 +165,8 @@ export default function GameScreen() {
                   turn={state.turn}
                   phase={state.phase}
                   ballSkin={ballSkin}
+                  playerCountryCode={countryCode}
+                  aiCountryCode={aiCountryCode}
                 />
               </View>
             )}
