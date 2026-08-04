@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DEFAULT_SQUAD_SIZE, LEADERBOARD_SIZE } from '../constants/game';
-import { DEFAULT_BALL_SKIN, DEFAULT_PLAYER_COLORS, parseBallSkin } from '../constants/skins';
-import { BallSkin, TeamColors } from '../types/customize';
+import { DEFAULT_BALL_SKIN, DEFAULT_COUNTRY, DEFAULT_PLAYER_COLORS, parseBallSkin, parseCountryCode } from '../constants/skins';
+import { BallSkin, CountryCode, TeamColors } from '../types/customize';
 import { LeaderboardEntry, SquadSize } from '../types/game';
 
 const STORAGE_KEY = '@lego_striker_leaderboard';
@@ -12,12 +12,14 @@ export interface GamePreferences {
   squadSize: SquadSize;
   teamColors: TeamColors;
   ballSkin: BallSkin;
+  countryCode: CountryCode;
 }
 
 const DEFAULT_PREFS: GamePreferences = {
   squadSize: DEFAULT_SQUAD_SIZE,
   teamColors: DEFAULT_PLAYER_COLORS,
   ballSkin: DEFAULT_BALL_SKIN,
+  countryCode: DEFAULT_COUNTRY,
 };
 
 function isValidHex(color: unknown): color is string {
@@ -51,6 +53,7 @@ export async function loadPreferences(): Promise<GamePreferences> {
         squadSize: parsed.squadSize === 3 ? 3 : 2,
         teamColors: parseTeamColors(parsed.teamColors),
         ballSkin: parseBallSkin(parsed.ballSkin),
+        countryCode: parseCountryCode(parsed.countryCode),
       };
     }
   } catch {
@@ -58,7 +61,12 @@ export async function loadPreferences(): Promise<GamePreferences> {
   }
 
   const squadSize = await loadLegacySquadSize();
-  return { squadSize, teamColors: DEFAULT_PLAYER_COLORS, ballSkin: DEFAULT_BALL_SKIN };
+  return {
+    squadSize,
+    teamColors: DEFAULT_PLAYER_COLORS,
+    ballSkin: DEFAULT_BALL_SKIN,
+    countryCode: DEFAULT_COUNTRY,
+  };
 }
 
 export async function savePreferences(patch: Partial<GamePreferences>): Promise<GamePreferences> {
@@ -67,6 +75,7 @@ export async function savePreferences(patch: Partial<GamePreferences>): Promise<
     squadSize: patch.squadSize === 3 ? 3 : patch.squadSize === 2 ? 2 : current.squadSize,
     teamColors: patch.teamColors ? parseTeamColors(patch.teamColors) : current.teamColors,
     ballSkin: patch.ballSkin ? parseBallSkin(patch.ballSkin) : current.ballSkin,
+    countryCode: patch.countryCode ? parseCountryCode(patch.countryCode) : current.countryCode,
   };
   await AsyncStorage.setItem(PREFS_KEY, JSON.stringify(updated));
   await AsyncStorage.setItem(SQUAD_SIZE_KEY, String(updated.squadSize));

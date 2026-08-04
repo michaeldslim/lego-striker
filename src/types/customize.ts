@@ -5,6 +5,13 @@ export interface TeamColors {
 
 export type BallSkin = 'legacy' | 'pl' | 'worldcup';
 
+export type CountryCode = 'KR' | 'BR' | 'JP' | 'US' | 'GB' | 'ES' | 'DE' | 'FR' | 'AR' | 'IT' | 'PT' | 'MX';
+
+export interface CountryOption {
+  code: CountryCode;
+  name: string;
+}
+
 export interface BallSkinOption {
   id: BallSkin;
   label: string;
@@ -14,8 +21,8 @@ export type UniformKitId =
   | 'cyan'
   | 'gold'
   | 'neon'
-  | 'pink'
-  | 'purple'
+  | 'blue'
+  | 'red'
   | 'orange'
   | 'navy'
   | 'teal';

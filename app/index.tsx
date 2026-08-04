@@ -13,11 +13,12 @@ import { ScreenBackground } from '../src/components/ScreenBackground';
 import { NeonButton } from '../src/components/NeonButton';
 import { SquadPicker } from '../src/components/SquadPicker';
 import { BallSkinPicker } from '../src/components/BallSkinPicker';
+import { CountryPicker } from '../src/components/CountryPicker';
 import { UniformColorPicker } from '../src/components/UniformColorPicker';
 import { DEFAULT_SQUAD_SIZE } from '../src/constants/game';
-import { DEFAULT_BALL_SKIN, DEFAULT_PLAYER_COLORS } from '../src/constants/skins';
+import { DEFAULT_BALL_SKIN, DEFAULT_COUNTRY, DEFAULT_PLAYER_COLORS } from '../src/constants/skins';
 import { colors, spacing } from '../src/constants/theme';
-import { BallSkin, TeamColors } from '../src/types/customize';
+import { BallSkin, CountryCode, TeamColors } from '../src/types/customize';
 import { SquadSize } from '../src/types/game';
 import { getWinCount, loadPreferences, savePreferences } from '../src/utils/storage';
 
@@ -28,6 +29,7 @@ export default function HomeScreen() {
   const [squadSize, setSquadSizeState] = useState<SquadSize>(DEFAULT_SQUAD_SIZE);
   const [teamColors, setTeamColors] = useState<TeamColors>(DEFAULT_PLAYER_COLORS);
   const [ballSkin, setBallSkin] = useState<BallSkin>(DEFAULT_BALL_SKIN);
+  const [countryCode, setCountryCode] = useState<CountryCode>(DEFAULT_COUNTRY);
   const bounce = useSharedValue(0);
 
   useEffect(() => {
@@ -36,6 +38,7 @@ export default function HomeScreen() {
       setSquadSizeState(prefs.squadSize);
       setTeamColors(prefs.teamColors);
       setBallSkin(prefs.ballSkin);
+      setCountryCode(prefs.countryCode);
     });
     bounce.value = withRepeat(
       withSequence(withTiming(-8, { duration: 700 }), withTiming(0, { duration: 700 })),
@@ -63,6 +66,11 @@ export default function HomeScreen() {
     savePreferences({ ballSkin: skin });
   };
 
+  const handleCountryChange = (code: CountryCode) => {
+    setCountryCode(code);
+    savePreferences({ countryCode: code });
+  };
+
   const startGame = () => {
     router.push({ pathname: '/game', params: { squadSize: String(squadSize) } });
   };
@@ -71,15 +79,18 @@ export default function HomeScreen() {
     <ScreenBackground>
       <View style={[styles.root, screenPadding]}>
         <View style={styles.heroPanel}>
-          <View style={styles.logoBlock}>
-            <Animated.Text style={[styles.emoji, heroStyle]}>🧍⚽</Animated.Text>
-            <Text style={styles.title}>LEGO</Text>
-            <Text style={styles.titleAccent}>STRIKER</Text>
-            {wins > 0 && (
-              <View style={styles.bestBox}>
-                <Text style={styles.bestLabel}>WINS {wins}</Text>
-              </View>
-            )}
+          <View style={styles.heroContent}>
+            <View style={styles.logoBlock}>
+              <Animated.Text style={[styles.emoji, heroStyle]}>🧍⚽</Animated.Text>
+              <Text style={styles.title}>LEGO</Text>
+              <Text style={styles.titleAccent}>STRIKER</Text>
+              {wins > 0 && (
+                <View style={styles.bestBox}>
+                  <Text style={styles.bestLabel}>WINS {wins}</Text>
+                </View>
+              )}
+            </View>
+            <CountryPicker value={countryCode} onChange={handleCountryChange} />
           </View>
         </View>
 
@@ -122,6 +133,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: 0,
+  },
+  heroContent: {
+    alignItems: 'center',
+    gap: spacing.md,
+    maxWidth: '100%',
+    paddingHorizontal: spacing.xs,
+    flexShrink: 1,
   },
   logoBlock: {
     alignItems: 'center',
