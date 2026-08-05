@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../constants/theme';
+import { useGameFeedback } from '../hooks/useGameFeedback';
 
 interface Props {
   title: string;
@@ -17,6 +18,7 @@ interface Props {
   loading?: boolean;
   style?: ViewStyle;
   compact?: boolean;
+  feedback?: boolean;
 }
 
 const gradients: Record<string, [string, string]> = {
@@ -33,14 +35,21 @@ export function NeonButton({
   loading,
   style,
   compact = false,
+  feedback = true,
 }: Props) {
   const isPrimary = variant === 'primary';
   const isSecondary = variant === 'secondary';
   const radius = compact ? 12 : 14;
+  const { play: playFeedback } = useGameFeedback();
+
+  const handlePress = () => {
+    if (feedback) playFeedback('ui_tap');
+    onPress();
+  };
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={handlePress}
       disabled={disabled || loading}
       style={({ pressed }) => [
         styles.wrapper,

@@ -8,9 +8,13 @@ interface SettingsContextValue {
   bgmEnabled: boolean;
   bgmVolumeLevel: number;
   language: AppLanguage;
+  soundEnabled: boolean;
+  hapticsEnabled: boolean;
   setBgmEnabled: (enabled: boolean) => void;
   setBgmVolumeLevel: (level: number) => void;
   setLanguage: (language: AppLanguage) => void;
+  setSoundEnabled: (enabled: boolean) => void;
+  setHapticsEnabled: (enabled: boolean) => void;
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -20,12 +24,16 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [bgmEnabled, setBgmEnabledState] = useState(true);
   const [bgmVolumeLevel, setBgmVolumeLevelState] = useState(2);
   const [language, setLanguageState] = useState<AppLanguage>('en');
+  const [soundEnabled, setSoundEnabledState] = useState(true);
+  const [hapticsEnabled, setHapticsEnabledState] = useState(true);
 
   useEffect(() => {
     loadPreferences().then((prefs) => {
       setBgmEnabledState(prefs.bgmEnabled);
       setBgmVolumeLevelState(prefs.bgmVolumeLevel);
       setLanguageState(prefs.language);
+      setSoundEnabledState(prefs.soundEnabled);
+      setHapticsEnabledState(prefs.hapticsEnabled);
       void i18n.changeLanguage(prefs.language);
       setReady(true);
     });
@@ -47,17 +55,43 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     void savePreferences({ language: next });
   }, []);
 
+  const setSoundEnabled = useCallback((enabled: boolean) => {
+    setSoundEnabledState(enabled);
+    void savePreferences({ soundEnabled: enabled });
+  }, []);
+
+  const setHapticsEnabled = useCallback((enabled: boolean) => {
+    setHapticsEnabledState(enabled);
+    void savePreferences({ hapticsEnabled: enabled });
+  }, []);
+
   const value = useMemo(
     () => ({
       ready,
       bgmEnabled,
       bgmVolumeLevel,
       language,
+      soundEnabled,
+      hapticsEnabled,
       setBgmEnabled,
       setBgmVolumeLevel,
       setLanguage,
+      setSoundEnabled,
+      setHapticsEnabled,
     }),
-    [ready, bgmEnabled, bgmVolumeLevel, language, setBgmEnabled, setBgmVolumeLevel, setLanguage]
+    [
+      ready,
+      bgmEnabled,
+      bgmVolumeLevel,
+      language,
+      soundEnabled,
+      hapticsEnabled,
+      setBgmEnabled,
+      setBgmVolumeLevel,
+      setLanguage,
+      setSoundEnabled,
+      setHapticsEnabled,
+    ]
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

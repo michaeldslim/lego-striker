@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import * as Haptics from 'expo-haptics';
 import {
   AI_FLICK_DELAY_MS,
   AIM_DIRECTION_MIN,
@@ -10,6 +9,7 @@ import {
   SETTLE_THRESHOLD,
 } from '../constants/game';
 import { DEFAULT_PLAYER_COLORS, pickAiTeamColors } from '../constants/skins';
+import { useGameFeedback } from './useGameFeedback';
 import { gameMessages } from '../i18n/gameMessages';
 import { TeamColors } from '../types/customize';
 import {
@@ -119,6 +119,10 @@ function buildInitialState(
 }
 
 export function useSoccerEngine() {
+  const { play: playFeedback } = useGameFeedback();
+  const feedbackRef = useRef(playFeedback);
+  feedbackRef.current = playFeedback;
+
   const [state, setState] = useState<SoccerState | null>(null);
   const rafRef = useRef<number | null>(null);
   const aiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -220,7 +224,7 @@ export function useSoccerEngine() {
           return { ...s, gkBarYs };
         }
 
-        const { ball, characters, goal, saved } = stepPhysics(
+        const { ball, characters, goal, events } = stepPhysics(
           s.ball,
           s.characters,
           s.field,
@@ -228,8 +232,18 @@ export function useSoccerEngine() {
           elapsed
         );
 
-        if (saved) {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        if (events.kicked) {
+          feedbackRef.current('kick', { kickPower: events.kickPower });
+        }
+        if (events.wallBounce) {
+          feedbackRef.current('wall');
+        }
+        if (events.charBump) {
+          feedbackRef.current('char_bump');
+        }
+
+        if (events.saved) {
+          feedbackRef.current('save');
           if (!saveMessageRef.current) {
             saveMessageRef.current = true;
             if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -252,11 +266,7 @@ export function useSoccerEngine() {
           const won = playerGoals >= GOALS_TO_WIN || aiGoals >= GOALS_TO_WIN;
           const winner = playerGoals >= GOALS_TO_WIN ? 'player' : aiGoals >= GOALS_TO_WIN ? 'ai' : null;
 
-          Haptics.notificationAsync(
-            goal === 'player'
-              ? Haptics.NotificationFeedbackType.Success
-              : Haptics.NotificationFeedbackType.Warning
-          );
+          feedbackRef.current(goal === 'player' ? 'goal' : 'goal_against');
 
           return {
             ...s,
@@ -280,14 +290,16 @@ export function useSoccerEngine() {
         }
 
         if (allSettled(ball, characters)) {
+          const nextTurn = s.turn === 'player' ? 'ai' : 'player';
+          feedbackRef.current('turn');
           return {
             ...s,
             ball,
             characters,
             gkBarYs,
             phase: 'aiming',
-            turn: s.turn === 'player' ? 'ai' : 'player',
-            message: saved
+            turn: nextTurn,
+            message: events.saved
               ? gameMessages.save()
               : s.turn === 'player'
                 ? gameMessages.aiTurn()
@@ -306,7 +318,7 @@ export function useSoccerEngine() {
           ball,
           characters,
           gkBarYs,
-          message: saved ? gameMessages.save() : s.message,
+          message: events.saved ? gameMessages.save() : s.message,
         };
       });
 
@@ -362,6 +374,8 @@ export function useSoccerEngine() {
       const ch = findCharacterAt(s.characters, x, y, 'player');
       if (!ch) return s;
 
+      feedbackRef.current('select');
+
       return {
         ...s,
         selectedId: ch.id,
@@ -396,7 +410,7 @@ export function useSoccerEngine() {
   const onAimCancel = useCallback(() => {
     setState((s) => {
       if (!s || !s.aimStart || s.phase !== 'aiming') return s;
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      feedbackRef.current('cancel');
       return clearAimState(s, gameMessages.yourTurn());
     });
   }, []);
@@ -411,7 +425,7 @@ export function useSoccerEngine() {
       if (!activeChar) return s;
 
       if (isAimCancelZone(activeChar, s.aimCurrent, s.aimDraggedOut)) {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        feedbackRef.current('cancel');
         return clearAimState(s, gameMessages.yourTurn());
       }
 
@@ -436,9 +450,9 @@ export function useSoccerEngine() {
       const vy = Math.sin(angle) * power;
 
       if (isSuper) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        feedbackRef.current('super');
       } else {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        feedbackRef.current('flick');
       }
 
       const characters = s.characters.map((ch) =>

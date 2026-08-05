@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { useScreenPadding } from '../src/hooks/useScreenPadding';
+import { useGameFeedback } from '../src/hooks/useGameFeedback';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -33,15 +33,14 @@ export default function ResultScreen() {
 
   const [name, setName] = useState('');
   const [saved, setSaved] = useState(false);
+  const { play: playFeedback } = useGameFeedback();
 
   const scale = useSharedValue(0);
 
   useEffect(() => {
-    if (won) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
+    playFeedback(won ? 'win' : 'lose');
     scale.value = withDelay(200, withSpring(1, { damping: 12 }));
-  }, [won, scale]);
+  }, [won, scale, playFeedback]);
 
   const scoreStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -57,7 +56,7 @@ export default function ResultScreen() {
       date: new Date().toISOString(),
     });
     setSaved(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    playFeedback('ui_tap');
   };
 
   return (

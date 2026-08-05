@@ -1,5 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DEFAULT_BGM_VOLUME_LEVEL, BGM_VOLUME_MAX_LEVEL } from '../constants/audio';
+import {
+  DEFAULT_BGM_VOLUME_LEVEL,
+  DEFAULT_HAPTICS_ENABLED,
+  DEFAULT_SOUND_ENABLED,
+  BGM_VOLUME_MAX_LEVEL,
+} from '../constants/audio';
 import { DEFAULT_SQUAD_SIZE, LEADERBOARD_SIZE } from '../constants/game';
 import { DEFAULT_BALL_SKIN, DEFAULT_COUNTRY, DEFAULT_PLAYER_COLORS, parseBallSkin, parseCountryCode } from '../constants/skins';
 import { getDeviceLanguage } from '../i18n';
@@ -19,6 +24,8 @@ export interface GamePreferences {
   bgmEnabled: boolean;
   bgmVolumeLevel: number;
   language: AppLanguage;
+  soundEnabled: boolean;
+  hapticsEnabled: boolean;
 }
 
 const DEFAULT_PREFS: GamePreferences = {
@@ -29,6 +36,8 @@ const DEFAULT_PREFS: GamePreferences = {
   bgmEnabled: true,
   bgmVolumeLevel: DEFAULT_BGM_VOLUME_LEVEL,
   language: getDeviceLanguage(),
+  soundEnabled: DEFAULT_SOUND_ENABLED,
+  hapticsEnabled: DEFAULT_HAPTICS_ENABLED,
 };
 
 function isValidHex(color: unknown): color is string {
@@ -76,6 +85,8 @@ export async function loadPreferences(): Promise<GamePreferences> {
         bgmEnabled: parsed.bgmEnabled !== false,
         bgmVolumeLevel: parseBgmVolumeLevel(parsed.bgmVolumeLevel),
         language: parseLanguage(parsed.language),
+        soundEnabled: parsed.soundEnabled !== false,
+        hapticsEnabled: parsed.hapticsEnabled !== false,
       };
     }
   } catch {
@@ -91,6 +102,8 @@ export async function loadPreferences(): Promise<GamePreferences> {
     bgmEnabled: DEFAULT_PREFS.bgmEnabled,
     bgmVolumeLevel: DEFAULT_PREFS.bgmVolumeLevel,
     language: DEFAULT_PREFS.language,
+    soundEnabled: DEFAULT_PREFS.soundEnabled,
+    hapticsEnabled: DEFAULT_PREFS.hapticsEnabled,
   };
 }
 
@@ -107,6 +120,9 @@ export async function savePreferences(patch: Partial<GamePreferences>): Promise<
         ? parseBgmVolumeLevel(patch.bgmVolumeLevel)
         : current.bgmVolumeLevel,
     language: patch.language ? parseLanguage(patch.language) : current.language,
+    soundEnabled: patch.soundEnabled !== undefined ? patch.soundEnabled : current.soundEnabled,
+    hapticsEnabled:
+      patch.hapticsEnabled !== undefined ? patch.hapticsEnabled : current.hapticsEnabled,
   };
   await AsyncStorage.setItem(PREFS_KEY, JSON.stringify(updated));
   await AsyncStorage.setItem(SQUAD_SIZE_KEY, String(updated.squadSize));

@@ -8,6 +8,7 @@ import '../src/i18n';
 import { BackgroundMusic } from '../src/components/BackgroundMusic';
 import { ScreenBackground } from '../src/components/ScreenBackground';
 import { SettingsProvider } from '../src/contexts/SettingsContext';
+import { GameFeedbackProvider } from '../src/contexts/GameFeedbackContext';
 import { useLandscapeLock } from '../src/hooks/useLandscapeLock';
 import { colors } from '../src/constants/theme';
 
@@ -17,27 +18,29 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <SettingsProvider>
-        <GestureHandlerRootView style={styles.root}>
-          <BackgroundMusic />
-          {!ready ? (
-            <ScreenBackground>
-              <View style={styles.loader}>
-                <ActivityIndicator size="large" color={colors.neonCyan} />
-              </View>
-            </ScreenBackground>
-          ) : (
-            <>
-              <StatusBar style="light" hidden />
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  contentStyle: { backgroundColor: colors.background },
-                  animation: 'fade',
-                }}
-              />
-            </>
-          )}
-        </GestureHandlerRootView>
+        <GameFeedbackProvider>
+          <GestureHandlerRootView style={styles.root}>
+            <BackgroundMusic />
+            {!ready ? (
+              <ScreenBackground>
+                <View style={styles.loader}>
+                  <ActivityIndicator size="large" color={colors.neonCyan} />
+                </View>
+              </ScreenBackground>
+            ) : (
+              <>
+                <StatusBar style="light" hidden />
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: colors.background },
+                    animation: 'fade',
+                  }}
+                />
+              </>
+            )}
+          </GestureHandlerRootView>
+        </GameFeedbackProvider>
       </SettingsProvider>
     </SafeAreaProvider>
   );

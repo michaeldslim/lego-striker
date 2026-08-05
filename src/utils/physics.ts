@@ -8,6 +8,7 @@ import {
   CHAR_MIN_SPEED,
   CHAR_STOP_ON_KICK,
   KICK_TRANSFER,
+  MAX_POWER,
   MIN_KICK_SPEED,
 } from '../constants/game';
 import { getGkBarRects, resolveBallGkBar } from './gk';
@@ -80,9 +81,9 @@ function separateCharacterBall(character: CircleBody, ball: CircleBody): { nx: n
  * Football Striker 스타일 킥: 움직이는 캐릭터가 공을 치면
  * 캐릭터는 멈추고 운동량은 공으로 전달된다.
  */
-function resolveKick(character: CircleBody, ball: CircleBody): void {
+function resolveKick(character: CircleBody, ball: CircleBody): { kicked: boolean; power: number } {
   const normal = separateCharacterBall(character, ball);
-  if (!normal) return;
+  if (!normal) return { kicked: false, power: 0 };
 
   const { nx, ny } = normal;
   const charSpeedN = character.vx * nx + character.vy * ny;
@@ -90,11 +91,11 @@ function resolveKick(character: CircleBody, ball: CircleBody): void {
   // 캐릭터가 공 쪽으로 움직일 때만 킥
   if (charSpeedN < MIN_KICK_SPEED) {
     // 정지/느린 캐릭터 — 공만 살짝 밀어냄
-    if (speed(ball) < 0.5 && speed(character) < CHAR_MIN_SPEED) return;
+    if (speed(ball) < 0.5 && speed(character) < CHAR_MIN_SPEED) return { kicked: false, power: 0 };
     const push = 0.4;
     ball.vx += nx * push;
     ball.vy += ny * push;
-    return;
+    return { kicked: false, power: 0 };
   }
 
   const kickPower = charSpeedN * KICK_TRANSFER;
@@ -104,15 +105,17 @@ function resolveKick(character: CircleBody, ball: CircleBody): void {
   // 캐릭터는 킥 후 거의 멈춤
   character.vx *= CHAR_STOP_ON_KICK;
   character.vy *= CHAR_STOP_ON_KICK;
+
+  return { kicked: true, power: Math.min(1, kickPower / MAX_POWER) };
 }
 
 /** 캐릭터끼리 부딪힘 — 약한 반발, 빠르게 감속 */
-function resolveCharacterBump(a: CircleBody, b: CircleBody): void {
+function resolveCharacterBump(a: CircleBody, b: CircleBody): boolean {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
   const dist = Math.sqrt(dx * dx + dy * dy);
   const minDist = a.radius + b.radius;
-  if (dist >= minDist || dist === 0) return;
+  if (dist >= minDist || dist === 0) return false;
 
   const nx = dx / dist;
   const ny = dy / dist;
@@ -126,13 +129,14 @@ function resolveCharacterBump(a: CircleBody, b: CircleBody): void {
   const dvx = a.vx - b.vx;
   const dvy = a.vy - b.vy;
   const dvn = dvx * nx + dvy * ny;
-  if (dvn <= 0) return;
+  if (dvn <= 0) return false;
 
   const impulse = dvn * 0.35;
   a.vx -= impulse * nx;
   a.vy -= impulse * ny;
   b.vx += impulse * nx;
   b.vy += impulse * ny;
+  return true;
 }
 
 function isInGoalMouth(y: number, radius: number, field: FieldBounds): boolean {
@@ -140,28 +144,35 @@ function isInGoalMouth(y: number, radius: number, field: FieldBounds): boolean {
   return y - radius > top && y + radius < bottom;
 }
 
-function bounceBallOffWalls(ball: CircleBody, field: FieldBounds): void {
+function bounceBallOffWalls(ball: CircleBody, field: FieldBounds): boolean {
   const { width, height, goalZone } = field;
   const goalTop = goalZone.top;
   const goalBottom = goalZone.bottom;
+  let bounced = false;
 
   if (ball.y - ball.radius < 0) {
     ball.y = ball.radius;
     ball.vy = Math.abs(ball.vy) * 0.65;
+    bounced = true;
   }
   if (ball.y + ball.radius > height) {
     ball.y = height - ball.radius;
     ball.vy = -Math.abs(ball.vy) * 0.65;
+    bounced = true;
   }
 
   if (ball.x - ball.radius < 0 && !isInGoalMouth(ball.y, ball.radius, field)) {
     ball.x = ball.radius;
     ball.vx = Math.abs(ball.vx) * 0.6;
+    bounced = true;
   }
   if (ball.x + ball.radius > width && !isInGoalMouth(ball.y, ball.radius, field)) {
     ball.x = width - ball.radius;
     ball.vx = -Math.abs(ball.vx) * 0.6;
+    bounced = true;
   }
+
+  return bounced;
 }
 
 function clampCharacterToField(ch: CircleBody, field: FieldBounds): void {
@@ -191,16 +202,28 @@ export function allSettled(ball: Ball, characters: Character[]): boolean {
 
 export type GoalScorer = 'player' | 'ai' | null;
 
+export interface PhysicsEvents {
+  saved: boolean;
+  kicked: boolean;
+  kickPower: number;
+  wallBounce: boolean;
+  charBump: boolean;
+}
+
 export function stepPhysics(
   ball: Ball,
   characters: Character[],
   field: FieldBounds,
   gkBars: GoalkeeperBar[],
   elapsedMs: number
-): { ball: Ball; characters: Character[]; goal: GoalScorer; saved: boolean } {
+): { ball: Ball; characters: Character[]; goal: GoalScorer; events: PhysicsEvents } {
   const newBall: Ball = { ...ball };
   const newChars = characters.map((c) => ({ ...c }));
   let saved = false;
+  let kicked = false;
+  let kickPower = 0;
+  let wallBounce = false;
+  let charBump = false;
 
   // 1. 이동
   newBall.x += newBall.vx;
@@ -211,7 +234,9 @@ export function stepPhysics(
   }
 
   // 2. 벽
-  bounceBallOffWalls(newBall, field);
+  if (bounceBallOffWalls(newBall, field)) {
+    wallBounce = true;
+  }
   for (const ch of newChars) {
     clampCharacterToField(ch, field);
   }
@@ -226,13 +251,19 @@ export function stepPhysics(
 
   // 4. 캐릭터 → 공 킥 (축구 핵심)
   for (const ch of newChars) {
-    resolveKick(ch, newBall);
+    const kick = resolveKick(ch, newBall);
+    if (kick.kicked) {
+      kicked = true;
+      kickPower = Math.max(kickPower, kick.power);
+    }
   }
 
   // 5. 캐릭터끼리
   for (let i = 0; i < newChars.length; i++) {
     for (let j = i + 1; j < newChars.length; j++) {
-      resolveCharacterBump(newChars[i], newChars[j]);
+      if (resolveCharacterBump(newChars[i], newChars[j])) {
+        charBump = true;
+      }
     }
   }
 
@@ -249,7 +280,12 @@ export function stepPhysics(
     goal = 'player';
   }
 
-  return { ball: newBall, characters: newChars, goal, saved };
+  return {
+    ball: newBall,
+    characters: newChars,
+    goal,
+    events: { saved, kicked, kickPower, wallBounce, charBump },
+  };
 }
 
 export function formatScore(n: number): string {

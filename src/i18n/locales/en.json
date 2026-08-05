@@ -9,6 +9,8 @@
     "title": "SETTINGS",
     "bgm": "Background Music",
     "bgmVolume": "Music Volume",
+    "sound": "Sound Effects",
+    "haptics": "Haptics",
     "language": "Language",
     "back": "BACK"
   },

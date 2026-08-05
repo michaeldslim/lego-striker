@@ -9,6 +9,8 @@
     "title": "설정",
     "bgm": "배경 음악",
     "bgmVolume": "음악 볼륨",
+    "sound": "효과음",
+    "haptics": "햅틱",
     "language": "언어",
     "back": "뒤로"
   },

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
@@ -42,7 +42,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const screenPadding = useScreenPadding();
   const { t } = useTranslation();
-  const { bgmEnabled, bgmVolumeLevel, language, setBgmEnabled, setBgmVolumeLevel, setLanguage } =
+  const { bgmEnabled, bgmVolumeLevel, language, soundEnabled, hapticsEnabled, setBgmEnabled, setBgmVolumeLevel, setLanguage, setSoundEnabled, setHapticsEnabled } =
     useSettings();
 
   return (
@@ -53,7 +53,12 @@ export default function SettingsScreen() {
           <NeonButton title={t('settings.back')} variant="secondary" onPress={() => router.back()} />
         </View>
 
-        <View style={styles.contentPanel}>
+        <ScrollView
+          style={styles.contentPanel}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
           <View style={styles.card}>
             <View style={styles.row}>
               <Text style={styles.label}>{t('settings.bgm')}</Text>
@@ -91,10 +96,34 @@ export default function SettingsScreen() {
           </View>
 
           <View style={styles.card}>
+            <View style={styles.row}>
+              <Text style={styles.label}>{t('settings.sound')}</Text>
+              <Switch
+                value={soundEnabled}
+                onValueChange={setSoundEnabled}
+                trackColor={{ false: colors.cardBorder, true: 'rgba(0,229,255,0.35)' }}
+                thumbColor={soundEnabled ? colors.neonCyan : colors.textMuted}
+              />
+            </View>
+          </View>
+
+          <View style={styles.card}>
+            <View style={styles.row}>
+              <Text style={styles.label}>{t('settings.haptics')}</Text>
+              <Switch
+                value={hapticsEnabled}
+                onValueChange={setHapticsEnabled}
+                trackColor={{ false: colors.cardBorder, true: 'rgba(0,229,255,0.35)' }}
+                thumbColor={hapticsEnabled ? colors.neonCyan : colors.textMuted}
+              />
+            </View>
+          </View>
+
+          <View style={styles.card}>
             <Text style={styles.label}>{t('settings.language')}</Text>
             <LanguageToggle value={language} onChange={setLanguage} />
           </View>
-        </View>
+        </ScrollView>
       </View>
     </ScreenBackground>
   );
@@ -113,9 +142,12 @@ const styles = StyleSheet.create({
   },
   contentPanel: {
     flex: 1,
-    justifyContent: 'center',
-    gap: spacing.md,
     maxWidth: 420,
+  },
+  scrollContent: {
+    gap: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingBottom: spacing.lg,
   },
   title: {
     fontSize: fonts.heading,
