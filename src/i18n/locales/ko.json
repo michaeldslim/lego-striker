@@ -1,0 +1,74 @@
+{
+  "home": {
+    "kickOff": "킥 오프",
+    "leaderboard": "리더보드",
+    "settings": "설정",
+    "wins": "승리 {{count}}"
+  },
+  "settings": {
+    "title": "설정",
+    "bgm": "배경 음악",
+    "bgmVolume": "음악 볼륨",
+    "language": "언어",
+    "back": "뒤로"
+  },
+  "customize": {
+    "squadSize": "팀 인원",
+    "squadPlayers": "{{count}}명",
+    "squadHint": "여성 1명 포함",
+    "uniform": "유니폼",
+    "ballDesign": "공 디자인",
+    "country": "나라"
+  },
+  "hud": {
+    "you": "나",
+    "ai": "AI",
+    "yourTurn": "내 차례",
+    "aiTurn": "AI 차례",
+    "firstToGoals": "먼저 {{count}}골"
+  },
+  "game": {
+    "yourTurn": "내 차례!",
+    "aiTurn": "AI 차례",
+    "aiTurnEllipsis": "AI 차례...",
+    "save": "SAVE!",
+    "goal": "⚽ 골!",
+    "goalAgainst": "😱 상대 득점!",
+    "kickoff": "킥오프!",
+    "victory": "승리!",
+    "defeat": "패배...",
+    "super": "SUPER!",
+    "cancel": "취소"
+  },
+  "result": {
+    "victory": "승리!",
+    "defeat": "패배",
+    "initials": "이니셜 (3글자)",
+    "saveMatch": "기록 저장",
+    "saved": "✓ 기록 저장됨",
+    "rematch": "재경기",
+    "home": "홈"
+  },
+  "leaderboard": {
+    "title": "리더보드",
+    "subtitle": "경기 기록",
+    "clear": "기록 초기화",
+    "back": "뒤로",
+    "empty": "아직 경기 기록이 없습니다",
+    "emptyHint": "첫 경기를 뛰어보세요!"
+  },
+  "countries": {
+    "KR": "대한민국",
+    "BR": "브라질",
+    "JP": "일본",
+    "US": "미국",
+    "GB": "잉글랜드",
+    "ES": "스페인",
+    "DE": "독일",
+    "FR": "프랑스",
+    "AR": "아르헨티나",
+    "IT": "이탈리아",
+    "PT": "포르투갈",
+    "MX": "멕시코"
+  }
+}

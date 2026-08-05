@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useScreenPadding } from '../src/hooks/useScreenPadding';
 import Animated, {
   useAnimatedStyle,
@@ -25,6 +26,7 @@ import { getWinCount, loadPreferences, savePreferences } from '../src/utils/stor
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const screenPadding = useScreenPadding();
   const [wins, setWins] = useState(0);
   const [squadSize, setSquadSizeState] = useState<SquadSize>(DEFAULT_SQUAD_SIZE);
@@ -89,18 +91,30 @@ export default function HomeScreen() {
               <Text style={styles.titleAccent}>STRIKER</Text>
               {wins > 0 && (
                 <View style={styles.bestBox}>
-                  <Text style={styles.bestLabel}>WINS {wins}</Text>
+                  <Text style={styles.bestLabel}>{t('home.wins', { count: wins })}</Text>
                 </View>
               )}
             </View>
             <View style={styles.actions}>
-              <NeonButton title="KICK OFF" onPress={startGame} compact style={styles.actionButton} />
               <NeonButton
-                title="LEADERBOARD"
+                title={t('home.kickOff')}
+                onPress={startGame}
+                compact
+                style={styles.actionButton}
+              />
+              <NeonButton
+                title={t('home.leaderboard')}
                 variant="secondary"
                 compact
                 style={styles.actionButton}
                 onPress={() => router.push('/leaderboard')}
+              />
+              <NeonButton
+                title={t('home.settings')}
+                variant="secondary"
+                compact
+                style={styles.actionButton}
+                onPress={() => router.push('/settings')}
               />
             </View>
           </View>

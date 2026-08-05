@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { colors } from '../constants/theme';
 import { Turn } from '../types/game';
 
@@ -12,26 +13,29 @@ interface Props {
 }
 
 export function HUD({ playerGoals, aiGoals, turn, message, goalsToWin }: Props) {
+  const { t } = useTranslation();
   const isPlayerTurn = turn === 'player';
 
   return (
     <View style={styles.container}>
       <View style={styles.scoreGroup}>
-        <Text style={styles.teamLabel}>YOU</Text>
+        <Text style={styles.teamLabel}>{t('hud.you')}</Text>
         <Text style={[styles.score, styles.playerScore]}>{playerGoals}</Text>
       </View>
 
       <View style={styles.center}>
         <View style={[styles.turnBadge, isPlayerTurn ? styles.playerTurn : styles.aiTurn]}>
-          <Text style={styles.turnText}>{isPlayerTurn ? 'YOUR TURN' : 'AI TURN'}</Text>
+          <Text style={styles.turnText}>
+            {isPlayerTurn ? t('hud.yourTurn') : t('hud.aiTurn')}
+          </Text>
         </View>
         <Text style={styles.message} numberOfLines={1}>
-          {message?.trim() ? message : `먼저 ${goalsToWin}골`}
+          {message?.trim() ? message : t('hud.firstToGoals', { count: goalsToWin })}
         </Text>
       </View>
 
       <View style={[styles.scoreGroup, styles.right]}>
-        <Text style={styles.teamLabel}>AI</Text>
+        <Text style={styles.teamLabel}>{t('hud.ai')}</Text>
         <Text style={[styles.score, styles.aiScore]}>{aiGoals}</Text>
       </View>
     </View>

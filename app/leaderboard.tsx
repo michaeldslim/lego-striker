@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useScreenPadding } from '../src/hooks/useScreenPadding';
 import { ScreenBackground } from '../src/components/ScreenBackground';
 import { NeonButton } from '../src/components/NeonButton';
@@ -10,6 +11,7 @@ import { clearLeaderboard, getLeaderboard } from '../src/utils/storage';
 
 export default function LeaderboardScreen() {
   const router = useRouter();
+  const { t, i18n } = useTranslation();
   const screenPadding = useScreenPadding();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
 
@@ -33,15 +35,15 @@ export default function LeaderboardScreen() {
     <ScreenBackground>
       <View style={[styles.root, screenPadding]}>
         <View style={styles.headerPanel}>
-          <Text style={styles.title}>LEADERBOARD</Text>
-          <Text style={styles.subtitle}>MATCH HISTORY</Text>
+          <Text style={styles.title}>{t('leaderboard.title')}</Text>
+          <Text style={styles.subtitle}>{t('leaderboard.subtitle')}</Text>
           <View style={styles.actions}>
             {entries.length > 0 && (
               <Pressable onPress={handleClear} style={styles.clearBtn}>
-                <Text style={styles.clearText}>기록 초기화</Text>
+                <Text style={styles.clearText}>{t('leaderboard.clear')}</Text>
               </Pressable>
             )}
-            <NeonButton title="BACK" variant="secondary" onPress={() => router.back()} />
+            <NeonButton title={t('leaderboard.back')} variant="secondary" onPress={() => router.back()} />
           </View>
         </View>
 
@@ -49,8 +51,8 @@ export default function LeaderboardScreen() {
           {entries.length === 0 ? (
             <View style={styles.empty}>
               <Text style={styles.emptyIcon}>🏟️</Text>
-              <Text style={styles.emptyText}>아직 경기 기록이 없습니다</Text>
-              <Text style={styles.emptyHint}>첫 경기를 뛰어보세요!</Text>
+              <Text style={styles.emptyText}>{t('leaderboard.empty')}</Text>
+              <Text style={styles.emptyHint}>{t('leaderboard.emptyHint')}</Text>
             </View>
           ) : (
             <FlatList
@@ -64,7 +66,9 @@ export default function LeaderboardScreen() {
                   <View style={styles.info}>
                     <Text style={styles.name}>{item.name}</Text>
                     <Text style={styles.date}>
-                      {new Date(item.date).toLocaleDateString('ko-KR')}
+                      {new Date(item.date).toLocaleDateString(
+                        i18n.language === 'ko' ? 'ko-KR' : 'en-US'
+                      )}
                     </Text>
                   </View>
                   <Text style={styles.score}>

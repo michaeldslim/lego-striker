@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import Svg from 'react-native-svg';
 import { DEFAULT_PLAYER_COLORS, UNIFORM_KITS } from '../constants/skins';
 import { colors, spacing } from '../constants/theme';
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function UniformColorPicker({ value, onChange, compact = false, align = 'center' }: Props) {
+  const { t } = useTranslation();
   const shirt = value.shirt ?? DEFAULT_PLAYER_COLORS.shirt;
   const pants = value.pants ?? DEFAULT_PLAYER_COLORS.pants;
 
@@ -21,7 +23,7 @@ export function UniformColorPicker({ value, onChange, compact = false, align = '
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.label, isLeft && styles.labelLeft]}>유니폼</Text>
+      <Text style={[styles.label, isLeft && styles.labelLeft]}>{t('customize.uniform')}</Text>
       <View style={styles.row}>
         <View style={[styles.swatches, isLeft && styles.swatchesLeft]}>
           {UNIFORM_KITS.map((kit) => {

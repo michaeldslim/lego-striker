@@ -1,0 +1,74 @@
+{
+  "home": {
+    "kickOff": "KICK OFF",
+    "leaderboard": "LEADERBOARD",
+    "settings": "SETTINGS",
+    "wins": "WINS {{count}}"
+  },
+  "settings": {
+    "title": "SETTINGS",
+    "bgm": "Background Music",
+    "bgmVolume": "Music Volume",
+    "language": "Language",
+    "back": "BACK"
+  },
+  "customize": {
+    "squadSize": "Squad Size",
+    "squadPlayers": "{{count}} players",
+    "squadHint": "Includes 1 female player",
+    "uniform": "Uniform",
+    "ballDesign": "Ball Design",
+    "country": "Country"
+  },
+  "hud": {
+    "you": "YOU",
+    "ai": "AI",
+    "yourTurn": "YOUR TURN",
+    "aiTurn": "AI TURN",
+    "firstToGoals": "First to {{count}} goals"
+  },
+  "game": {
+    "yourTurn": "Your turn!",
+    "aiTurn": "AI turn",
+    "aiTurnEllipsis": "AI turn...",
+    "save": "SAVE!",
+    "goal": "⚽ GOAL!",
+    "goalAgainst": "😱 Opponent scored!",
+    "kickoff": "Kickoff!",
+    "victory": "Victory!",
+    "defeat": "Defeat...",
+    "super": "SUPER!",
+    "cancel": "Cancel"
+  },
+  "result": {
+    "victory": "VICTORY!",
+    "defeat": "DEFEAT",
+    "initials": "Initials (3 letters)",
+    "saveMatch": "SAVE MATCH",
+    "saved": "✓ Match saved",
+    "rematch": "REMATCH",
+    "home": "HOME"
+  },
+  "leaderboard": {
+    "title": "LEADERBOARD",
+    "subtitle": "MATCH HISTORY",
+    "clear": "Clear history",
+    "back": "BACK",
+    "empty": "No matches yet",
+    "emptyHint": "Play your first match!"
+  },
+  "countries": {
+    "KR": "South Korea",
+    "BR": "Brazil",
+    "JP": "Japan",
+    "US": "United States",
+    "GB": "England",
+    "ES": "Spain",
+    "DE": "Germany",
+    "FR": "France",
+    "AR": "Argentina",
+    "IT": "Italy",
+    "PT": "Portugal",
+    "MX": "Mexico"
+  }
+}

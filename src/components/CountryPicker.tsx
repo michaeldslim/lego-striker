@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { COUNTRIES, findCountry } from '../constants/skins';
 import { colors, spacing } from '../constants/theme';
 import { CountryCode } from '../types/customize';
@@ -14,11 +15,12 @@ const FLAG_W = 32;
 const FLAG_H = 22;
 
 export function CountryPicker({ value, onChange }: Props) {
+  const { t } = useTranslation();
   const selected = findCountry(value);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>나라</Text>
+      <Text style={styles.label}>{t('customize.country')}</Text>
       <View style={styles.grid}>
         {COUNTRIES.map((country) => {
           const isSelected = country.code === value;
@@ -26,7 +28,7 @@ export function CountryPicker({ value, onChange }: Props) {
             <Pressable
               key={country.code}
               onPress={() => onChange(country.code)}
-              accessibilityLabel={country.name}
+              accessibilityLabel={t(`countries.${country.code}`)}
               style={[styles.chip, isSelected && styles.chipSelected]}
             >
               <FlagIcon code={country.code} width={FLAG_W} height={FLAG_H} />
@@ -34,7 +36,7 @@ export function CountryPicker({ value, onChange }: Props) {
           );
         })}
       </View>
-      {selected && <Text style={styles.countryName}>{selected.name}</Text>}
+      {selected && <Text style={styles.countryName}>{t(`countries.${selected.code}`)}</Text>}
     </View>
   );
 }

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { useScreenPadding } from '../src/hooks/useScreenPadding';
 import Animated, {
   useAnimatedStyle,
@@ -17,6 +18,7 @@ import { saveMatch } from '../src/utils/storage';
 export default function ResultScreen() {
   const screenPadding = useScreenPadding();
   const router = useRouter();
+  const { t } = useTranslation();
   const params = useLocalSearchParams<{
     playerGoals: string;
     aiGoals: string;
@@ -62,18 +64,18 @@ export default function ResultScreen() {
     <ScreenBackground>
       <View style={[styles.root, screenPadding]}>
         <View style={styles.scorePanel}>
-          <Text style={styles.title}>{won ? 'VICTORY!' : 'DEFEAT'}</Text>
+          <Text style={styles.title}>{won ? t('result.victory') : t('result.defeat')}</Text>
           <Text style={styles.emoji}>{won ? '🏆' : '😤'}</Text>
 
           <Animated.View style={[styles.scoreBox, scoreStyle]}>
             <View style={styles.scoreRow}>
               <View style={styles.teamCol}>
-                <Text style={styles.teamLabel}>YOU</Text>
+                <Text style={styles.teamLabel}>{t('hud.you')}</Text>
                 <Text style={[styles.goalNum, styles.playerGoals]}>{playerGoals}</Text>
               </View>
               <Text style={styles.dash}>—</Text>
               <View style={styles.teamCol}>
-                <Text style={styles.teamLabel}>AI</Text>
+                <Text style={styles.teamLabel}>{t('hud.ai')}</Text>
                 <Text style={[styles.goalNum, styles.aiGoals]}>{aiGoals}</Text>
               </View>
             </View>
@@ -83,7 +85,7 @@ export default function ResultScreen() {
         <View style={styles.actionPanel}>
           {!saved ? (
             <View style={styles.saveSection}>
-              <Text style={styles.saveLabel}>이니셜 (3글자)</Text>
+              <Text style={styles.saveLabel}>{t('result.initials')}</Text>
               <TextInput
                 style={styles.input}
                 value={name}
@@ -93,21 +95,21 @@ export default function ResultScreen() {
                 maxLength={3}
                 autoCapitalize="characters"
               />
-              <NeonButton title="SAVE MATCH" onPress={handleSave} />
+              <NeonButton title={t('result.saveMatch')} onPress={handleSave} />
             </View>
           ) : (
             <View style={styles.savedMsg}>
-              <Text style={styles.savedText}>✓ 기록 저장됨</Text>
+              <Text style={styles.savedText}>{t('result.saved')}</Text>
             </View>
           )}
 
           <View style={styles.actions}>
             <NeonButton
-              title="REMATCH"
+              title={t('result.rematch')}
               onPress={() => router.replace({ pathname: '/game', params: { squadSize: String(squadSize) } })}
             />
             <NeonButton
-              title="HOME"
+              title={t('result.home')}
               variant="secondary"
               onPress={() => router.replace('/')}
               style={styles.homeBtn}

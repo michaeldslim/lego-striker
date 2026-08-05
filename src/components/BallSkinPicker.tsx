@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import Svg from 'react-native-svg';
 import { BALL_SKINS } from '../constants/skins';
 import { colors, spacing } from '../constants/theme';
@@ -16,11 +17,12 @@ interface Props {
 const PREVIEW_RADIUS = 13;
 
 export function BallSkinPicker({ value, onChange, compact = false, align = 'center' }: Props) {
+  const { t } = useTranslation();
   const isLeft = align === 'left';
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.label, isLeft && styles.labelLeft]}>공 디자인</Text>
+      <Text style={[styles.label, isLeft && styles.labelLeft]}>{t('customize.ballDesign')}</Text>
       <View style={[styles.row, compact && styles.rowCompact, isLeft && styles.rowLeft]}>
         {BALL_SKINS.map((skin) => {
           const selected = value === skin.id;

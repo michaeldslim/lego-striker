@@ -1,8 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DEFAULT_BGM_VOLUME_LEVEL, BGM_VOLUME_MAX_LEVEL } from '../constants/audio';
 import { DEFAULT_SQUAD_SIZE, LEADERBOARD_SIZE } from '../constants/game';
 import { DEFAULT_BALL_SKIN, DEFAULT_COUNTRY, DEFAULT_PLAYER_COLORS, parseBallSkin, parseCountryCode } from '../constants/skins';
+import { getDeviceLanguage } from '../i18n';
 import { BallSkin, CountryCode, TeamColors } from '../types/customize';
 import { LeaderboardEntry, SquadSize } from '../types/game';
+import { AppLanguage } from '../types/settings';
 
 const STORAGE_KEY = '@lego_striker_leaderboard';
 const SQUAD_SIZE_KEY = '@lego_striker_squad_size';
@@ -13,6 +16,9 @@ export interface GamePreferences {
   teamColors: TeamColors;
   ballSkin: BallSkin;
   countryCode: CountryCode;
+  bgmEnabled: boolean;
+  bgmVolumeLevel: number;
+  language: AppLanguage;
 }
 
 const DEFAULT_PREFS: GamePreferences = {
@@ -20,6 +26,9 @@ const DEFAULT_PREFS: GamePreferences = {
   teamColors: DEFAULT_PLAYER_COLORS,
   ballSkin: DEFAULT_BALL_SKIN,
   countryCode: DEFAULT_COUNTRY,
+  bgmEnabled: true,
+  bgmVolumeLevel: DEFAULT_BGM_VOLUME_LEVEL,
+  language: getDeviceLanguage(),
 };
 
 function isValidHex(color: unknown): color is string {
@@ -33,6 +42,16 @@ function parseTeamColors(raw: unknown): TeamColors {
     return { shirt: colors.shirt, pants: colors.pants };
   }
   return DEFAULT_PLAYER_COLORS;
+}
+
+function parseBgmVolumeLevel(raw: unknown): number {
+  const n = typeof raw === 'number' ? raw : Number(raw);
+  if (!Number.isFinite(n)) return DEFAULT_BGM_VOLUME_LEVEL;
+  return Math.min(BGM_VOLUME_MAX_LEVEL, Math.max(0, Math.round(n)));
+}
+
+function parseLanguage(raw: unknown): AppLanguage {
+  return raw === 'ko' ? 'ko' : raw === 'en' ? 'en' : getDeviceLanguage();
 }
 
 async function loadLegacySquadSize(): Promise<SquadSize> {
@@ -54,6 +73,9 @@ export async function loadPreferences(): Promise<GamePreferences> {
         teamColors: parseTeamColors(parsed.teamColors),
         ballSkin: parseBallSkin(parsed.ballSkin),
         countryCode: parseCountryCode(parsed.countryCode),
+        bgmEnabled: parsed.bgmEnabled !== false,
+        bgmVolumeLevel: parseBgmVolumeLevel(parsed.bgmVolumeLevel),
+        language: parseLanguage(parsed.language),
       };
     }
   } catch {
@@ -66,6 +88,9 @@ export async function loadPreferences(): Promise<GamePreferences> {
     teamColors: DEFAULT_PLAYER_COLORS,
     ballSkin: DEFAULT_BALL_SKIN,
     countryCode: DEFAULT_COUNTRY,
+    bgmEnabled: DEFAULT_PREFS.bgmEnabled,
+    bgmVolumeLevel: DEFAULT_PREFS.bgmVolumeLevel,
+    language: DEFAULT_PREFS.language,
   };
 }
 
@@ -76,6 +101,12 @@ export async function savePreferences(patch: Partial<GamePreferences>): Promise<
     teamColors: patch.teamColors ? parseTeamColors(patch.teamColors) : current.teamColors,
     ballSkin: patch.ballSkin ? parseBallSkin(patch.ballSkin) : current.ballSkin,
     countryCode: patch.countryCode ? parseCountryCode(patch.countryCode) : current.countryCode,
+    bgmEnabled: patch.bgmEnabled !== undefined ? patch.bgmEnabled : current.bgmEnabled,
+    bgmVolumeLevel:
+      patch.bgmVolumeLevel !== undefined
+        ? parseBgmVolumeLevel(patch.bgmVolumeLevel)
+        : current.bgmVolumeLevel,
+    language: patch.language ? parseLanguage(patch.language) : current.language,
   };
   await AsyncStorage.setItem(PREFS_KEY, JSON.stringify(updated));
   await AsyncStorage.setItem(SQUAD_SIZE_KEY, String(updated.squadSize));

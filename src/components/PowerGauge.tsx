@@ -1,5 +1,6 @@
 import React from 'react';
 import { Circle, G, Line, Polygon, Text as SvgText } from 'react-native-svg';
+import { useTranslation } from 'react-i18next';
 import { CANCEL_AIM_RADIUS, SUPER_POWER_RATIO } from '../constants/game';
 import { colors } from '../constants/theme';
 import { powerGaugeColor } from '../utils/power';
@@ -38,6 +39,7 @@ function aimArrowPoints(x: number, y: number, angle: number, tipDist: number): s
 }
 
 export function PowerGauge({ x, y, angle, ratio, cancelling = false }: Props) {
+  const { t } = useTranslation();
   const gaugeColor = cancelling ? colors.neonPink : powerGaugeColor(ratio);
   const isSuper = !cancelling && ratio >= SUPER_POWER_RATIO;
 
@@ -75,7 +77,7 @@ export function PowerGauge({ x, y, angle, ratio, cancelling = false }: Props) {
           textAnchor="middle"
           alignmentBaseline="middle"
         >
-          취소
+          {t('game.cancel')}
         </SvgText>
       </G>
     );
@@ -183,7 +185,7 @@ export function PowerGauge({ x, y, angle, ratio, cancelling = false }: Props) {
           textAnchor="middle"
           alignmentBaseline="middle"
         >
-          SUPER!
+          {t('game.super')}
         </SvgText>
       )}
     </G>

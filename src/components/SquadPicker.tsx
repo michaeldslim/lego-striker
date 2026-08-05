@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { colors, fonts, spacing } from '../constants/theme';
 import { SquadSize } from '../types/game';
 
@@ -10,9 +11,11 @@ interface Props {
 }
 
 export function SquadPicker({ value, onChange, compact = false }: Props) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>팀 인원</Text>
+      <Text style={styles.label}>{t('customize.squadSize')}</Text>
       <View style={styles.row}>
         {([2, 3] as const).map((size) => {
           const selected = value === size;
@@ -23,12 +26,12 @@ export function SquadPicker({ value, onChange, compact = false }: Props) {
               style={[styles.option, compact && styles.optionCompact, selected && styles.optionSelected]}
             >
               <Text style={[styles.optionText, selected && styles.optionTextSelected]}>
-                {size}명
+                {t('customize.squadPlayers', { count: size })}
               </Text>
               {!compact && (
                 <>
                   <Text style={styles.optionEmoji}>{size === 2 ? '🧍🧍' : '🧍🧍🧍'}</Text>
-                  <Text style={styles.optionHint}>여성 1명 포함</Text>
+                  <Text style={styles.optionHint}>{t('customize.squadHint')}</Text>
                 </>
               )}
             </Pressable>

@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import { BGM_SOURCE, BGM_VOLUME } from '../constants/audio';
+import { BGM_SOURCE, volumeFromLevel } from '../constants/audio';
+import { useSettings } from '../contexts/SettingsContext';
 
 export function BackgroundMusic() {
+  const { ready, bgmEnabled, bgmVolumeLevel } = useSettings();
   const player = useAudioPlayer(BGM_SOURCE);
   const status = useAudioPlayerStatus(player);
 
@@ -14,15 +16,17 @@ export function BackgroundMusic() {
   }, []);
 
   useEffect(() => {
+    if (!ready) return;
     player.loop = true;
-    player.volume = BGM_VOLUME;
-  }, [player]);
-
-  useEffect(() => {
-    if (status.isLoaded && !status.playing) {
-      player.play();
+    player.volume = volumeFromLevel(bgmVolumeLevel);
+    if (bgmEnabled) {
+      if (status.isLoaded && !status.playing) {
+        player.play();
+      }
+    } else if (status.playing) {
+      player.pause();
     }
-  }, [status.isLoaded, status.playing, player]);
+  }, [ready, bgmEnabled, bgmVolumeLevel, player, status.isLoaded, status.playing]);
 
   return null;
 }

@@ -29,6 +29,7 @@ A **2D side-view flick soccer** game in the Football Striker style. Flick Lego m
 ```
 [Home] ──▶ [Game] ──▶ [Result]
   │         (landscape) │
+  ├── [Settings]        │
   └── [Leaderboard] ◀───┘
 ```
 
@@ -45,7 +46,7 @@ A **2D side-view flick soccer** game in the Football Striker style. Flick Lego m
   ↑ left = your goal         opponent goal = right ↑
 ```
 
-- **Home / Leaderboard**: portrait or landscape (free)
+- **Home / Leaderboard / Settings**: portrait or landscape (free)
 - **Game / Result**: landscape locked (`expo-screen-orientation` or `app.json`)
 - **v1.4**: selected country flag shown as a subtle watermark in the bottom-left of the field
 
@@ -60,18 +61,40 @@ A **2D side-view flick soccer** game in the Football Striker style. Flick Lego m
 │                             │  나라 (flags)     │
 │     [ KICK OFF ]            │                  │
 │     [ LEADERBOARD ]         │                  │
+│     [ SETTINGS ]            │                  │
 │   ← hero (flex, centered)   │  menu (320px)    │
 └─────────────────────────────┴──────────────────┘
 ```
 
 | Zone | Content |
 |------|---------|
-| **Left hero panel** (`flex: 1`) | Animated logo, win count, **KICK OFF** + **LEADERBOARD** — vertically & horizontally centered in remaining width |
+| **Left hero panel** (`flex: 1`) | Animated logo, win count, **KICK OFF** + **LEADERBOARD** + **SETTINGS** — vertically & horizontally centered in remaining width |
 | **Right menu column** (`width: 320`) | Scrollable **SquadPicker**, **UniformColorPicker**, **BallSkinPicker** (compact) · **CountryPicker** pinned at bottom |
 
 - Selections persist via `loadPreferences` / `savePreferences` (`AsyncStorage`)
 - Hero content max width ~280px; action buttons stretch full hero width
 - Implemented in `app/index.tsx`
+
+### Settings Screen (`app/settings.tsx`)
+
+Landscape-friendly two-column layout (header + options panel).
+
+| Control | Description |
+|---------|-------------|
+| **Background music** | Toggle on/off — persisted as `bgmEnabled` |
+| **Music volume** | Slider **0–10** (shown when BGM on) — persisted as `bgmVolumeLevel`; mapped to `expo-audio` volume `level / 10` |
+| **Language** | **KO / EN** segmented toggle — persisted as `language`; drives `i18next` |
+
+- BGM: `assets/sounds/playing.mp3` looped via `BackgroundMusic` in root layout
+- Settings state: `SettingsContext` + `loadPreferences` / `savePreferences`
+- Default BGM volume level: **2** (~20%)
+
+### Localization (i18n)
+
+- **Library**: `i18next` + `react-i18next` + `expo-localization`
+- **Locales**: `src/i18n/locales/en.json`, `ko.json`
+- **Init**: `src/i18n/index.ts` (device language default; overridden by saved `language` pref)
+- **Coverage**: home, settings, leaderboard, result, HUD, pickers, power gauge, in-game messages (`gameMessages` helper)
 
 ---
 
@@ -303,11 +326,21 @@ Select on home screen → save to `AsyncStorage` → apply in game.
 - [x] Home layout — hero (logo + KICK OFF / LEADERBOARD) left, customize menu right
 - [x] Types / constants / `game-plan` updated
 
-## v1.5 Feedback — Sound & Haptics
+## v1.5 Feedback — Sound, Haptics & Settings
 
-Audio & tactile feedback for immersion. **Sound assets & tone to be finalized before implementation** (see candidates below).
+Audio, tactile feedback, and user preferences. **SFX tone & assets still to be finalized** (see candidates below).
 
-### Current State (haptics — partial)
+### Current State
+
+| Area | Status |
+|------|--------|
+| **BGM** | ✅ `playing.mp3` loop, toggle + volume 0–10 in Settings |
+| **Settings screen** | ✅ BGM + language (KO/EN); haptics toggle pending |
+| **i18n** | ✅ KO / EN via `i18next` |
+| **SFX** | Not implemented |
+| **Haptics** | Partial (see table below); no ON/OFF toggle yet |
+
+### Haptics (partial)
 
 | Event | Haptic | Location |
 |-------|--------|----------|
@@ -319,8 +352,8 @@ Audio & tactile feedback for immersion. **Sound assets & tone to be finalized be
 | Cancel (return after aim) | `Light` impact | `useSoccerEngine` |
 | Victory (result screen) | `Success` notification | `result.tsx` |
 
-- **Sound**: not implemented
-- **Settings UI** (mute / haptics off): not implemented
+- **SFX**: not implemented (BGM only)
+- **Haptics ON/OFF**: not implemented (settings UI pending)
 
 ### Haptic Extensions (v1.5)
 
@@ -333,9 +366,20 @@ Audio & tactile feedback for immersion. **Sound assets & tone to be finalized be
 | Defeat (result screen) | `Error` notification | medium |
 
 - Keep `expo-haptics`; **cooldown** (≈80ms) on rapid collisions to prevent haptic spam
-- **Haptics ON/OFF** on home or settings (`AsyncStorage`)
+- **Haptics ON/OFF** in Settings (`AsyncStorage` — `hapticsEnabled` pending)
 
-### Sound Candidates (for review)
+### Background Music
+
+| Property | Value |
+|----------|-------|
+| Asset | `assets/sounds/playing.mp3` |
+| Playback | `expo-audio` `useAudioPlayer`, looped |
+| Volume scale | 0–10 UI → `player.volume = level / 10` |
+| Default level | 2 |
+| Persistence | `bgmEnabled`, `bgmVolumeLevel` in `GamePreferences` |
+| Component | `src/components/BackgroundMusic.tsx` |
+
+### Sound Candidates (SFX — for review)
 
 Short, upbeat tones suited to casual turn-based play. Not overwhelming; repeatable without annoyance.
 
@@ -358,24 +402,30 @@ Short, upbeat tones suited to casual turn-based play. Not overwhelming; repeatab
 2. **Futsal real** — recorded kick/net sounds, can feel heavier
 3. **Lego tone** — plastic click/snap feel, brand consistency
 
-- BGM is **out of scope** for v1.5 (stadium ambient option in v2+ if needed)
-- Assets: `assets/sounds/*.mp3` or `.wav` (short samples, 44.1kHz mono recommended)
+- SFX assets: `assets/sounds/*.mp3` or `.wav` (short samples, 44.1kHz mono recommended)
 - Library: **`expo-audio`** (SDK 57) — `useAudioPlayer` / preload pool
 
 ### Implementation Notes
-- `src/audio/sounds.ts` — event ID → file mapping, volume & cooldown
-- `src/hooks/useGameFeedback.ts` — unified sound + haptic API (`playKick()`, `playGoal()`, etc.)
-- `Preferences`: `soundEnabled`, `hapticsEnabled` → `storage.ts`
-- UI: home bottom or settings toggles (🔊 / 📳)
+- `src/constants/audio.ts` — BGM source, volume scale, `volumeFromLevel()`
+- `src/components/BackgroundMusic.tsx` — looped BGM driven by `SettingsContext`
+- `src/contexts/SettingsContext.tsx` — BGM + language prefs
+- `src/i18n/` — locale files + init; `gameMessages.ts` for engine strings
+- `app/settings.tsx` — BGM toggle, volume slider, language toggle
+- `src/audio/sounds.ts` — event ID → file mapping, volume & cooldown *(pending)*
+- `src/hooks/useGameFeedback.ts` — unified sound + haptic API *(pending)*
+- `Preferences`: `soundEnabled`, `hapticsEnabled` → `storage.ts` *(pending)*
 
 ### v1.5 Checklist
 
-- [ ] Finalize sound tone & asset direction (pick from candidates above)
+- [ ] Finalize SFX tone & asset direction (pick from candidates above)
 - [ ] Produce & import 5–7 core SFX (`kick`, `save`, `goal`, `ui_tap` minimum)
-- [ ] `expo-audio` integration + per-event playback
+- [ ] `expo-audio` SFX integration + per-event playback
+- [x] BGM — `playing.mp3` loop + settings toggle & volume slider (0–10)
+- [x] Settings screen — BGM + language (KO/EN)
+- [x] i18n — `i18next` + en/ko locale files
 - [ ] Haptic extensions + cooldown
-- [ ] Sound & haptics ON/OFF settings + persistence
-- [ ] `game-plan` / constants updated
+- [ ] Haptics ON/OFF setting + persistence
+- [x] `game-plan` / constants updated (partial)
 
 ---
 
@@ -388,7 +438,7 @@ Short, upbeat tones suited to casual turn-based play. Not overwhelming; repeatab
 | **v1.2** | Squad size 2/3 selection | ✅ Done |
 | **v1.3** | Hold charging, circular power/aim UI, cancel, kick-ready pose, AI wind-up | ✅ Done |
 | **v1.4** | Uniform colors, ball design, country selection, field flag & home layout | ✅ Done |
-| **v1.5** | Sound SFX, haptic extensions, mute & haptics settings | 🔜 Next |
+| **v1.5** | BGM + settings + i18n; SFX, haptic extensions, haptics toggle | 🔜 In progress |
 | **v2** | League mode, achievements, difficulty presets, field themes | |
 
 **Out of scope (not planned)**: 2P local, online multiplayer
@@ -404,7 +454,9 @@ Short, upbeat tones suited to casual turn-based play. Not overwhelming; repeatab
 - **react-native-reanimated** — UI animation
 - **react-native-svg** — field, characters, ball, GK bar
 - **expo-haptics** — kick / goal / save feedback (extended & configurable in v1.5)
-- **expo-audio** — SFX playback (v1.5, SDK 57)
+- **expo-audio** — BGM + SFX playback (SDK 57)
+- **i18next** + **react-i18next** + **expo-localization** — KO/EN UI strings
+- **@react-native-community/slider** — BGM volume control in settings
 - Custom 2D physics (circle collision + AABB bar collision)
 
 ---
@@ -415,4 +467,4 @@ Short, upbeat tones suited to casual turn-based play. Not overwhelming; repeatab
 2. **Special shots**: curve shot (power charge done in v1.3)
 3. **Field themes**: night / indoor backgrounds (uniforms & ball in v1.4)
 4. **Replay**: last goal slow-mo
-5. **BGM**: stadium ambient loop (separate from v1.5 SFX, optional)
+5. **More BGM tracks**: alternate stadium / menu themes

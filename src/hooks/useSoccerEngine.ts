@@ -10,6 +10,7 @@ import {
   SETTLE_THRESHOLD,
 } from '../constants/game';
 import { DEFAULT_PLAYER_COLORS, pickAiTeamColors } from '../constants/skins';
+import { gameMessages } from '../i18n/gameMessages';
 import { TeamColors } from '../types/customize';
 import {
   Ball,
@@ -163,7 +164,7 @@ export function useSoccerEngine() {
         phase: 'simulating',
         activeCharacterId: aiChar.id,
         selectedId: aiChar.id,
-        message: 'AI 차례...',
+        message: gameMessages.aiTurnEllipsis(),
       };
     });
   }, []);
@@ -181,7 +182,7 @@ export function useSoccerEngine() {
         ...s,
         activeCharacterId: aiChar.id,
         selectedId: aiChar.id,
-        message: 'AI 차례...',
+        message: gameMessages.aiTurnEllipsis(),
       };
     });
 
@@ -235,8 +236,11 @@ export function useSoccerEngine() {
             saveTimerRef.current = setTimeout(() => {
               saveMessageRef.current = false;
               setState((prev) => {
-                if (!prev || prev.message !== 'SAVE!') return prev;
-                return { ...prev, message: prev.turn === 'player' ? '내 차례!' : 'AI 차례' };
+                if (!prev) return prev;
+                return {
+                  ...prev,
+                  message: prev.turn === 'player' ? gameMessages.yourTurn() : gameMessages.aiTurn(),
+                };
               });
             }, SAVE_MESSAGE_MS);
           }
@@ -264,7 +268,7 @@ export function useSoccerEngine() {
             phase: 'goalCelebration',
             isFinished: won,
             winner,
-            message: goal === 'player' ? '⚽ GOAL!' : '😱 상대 득점!',
+            message: goal === 'player' ? gameMessages.goal() : gameMessages.goalAgainst(),
             lastGoalScorer: goal,
             aimStart: null,
             aimCurrent: null,
@@ -283,7 +287,11 @@ export function useSoccerEngine() {
             gkBarYs,
             phase: 'aiming',
             turn: s.turn === 'player' ? 'ai' : 'player',
-            message: saved ? 'SAVE!' : s.turn === 'player' ? 'AI 차례' : '내 차례!',
+            message: saved
+              ? gameMessages.save()
+              : s.turn === 'player'
+                ? gameMessages.aiTurn()
+                : gameMessages.yourTurn(),
             aimStart: null,
             aimCurrent: null,
             aimStartTime: null,
@@ -298,7 +306,7 @@ export function useSoccerEngine() {
           ball,
           characters,
           gkBarYs,
-          message: saved ? 'SAVE!' : s.message,
+          message: saved ? gameMessages.save() : s.message,
         };
       });
 
@@ -321,7 +329,7 @@ export function useSoccerEngine() {
       setState((s) => {
         if (!s) return s;
         if (s.isFinished) {
-          return { ...s, phase: 'aiming', message: s.winner === 'player' ? '승리!' : '패배...' };
+          return { ...s, phase: 'aiming', message: s.winner === 'player' ? gameMessages.victory() : gameMessages.defeat() };
         }
         const reset = resetAfterGoal(s.field, s.squadSize, s.playerColors, s.aiColors);
         const kickoffTeam = s.lastGoalScorer === 'player' ? 'ai' : 'player';
@@ -330,7 +338,7 @@ export function useSoccerEngine() {
           ...reset,
           phase: 'aiming',
           turn: kickoffTeam,
-          message: '킥오프!',
+          message: gameMessages.kickoff(),
           lastGoalScorer: null,
           aimStart: null,
           aimCurrent: null,
@@ -389,7 +397,7 @@ export function useSoccerEngine() {
     setState((s) => {
       if (!s || !s.aimStart || s.phase !== 'aiming') return s;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      return clearAimState(s, '내 차례!');
+      return clearAimState(s, gameMessages.yourTurn());
     });
   }, []);
 
@@ -404,7 +412,7 @@ export function useSoccerEngine() {
 
       if (isAimCancelZone(activeChar, s.aimCurrent, s.aimDraggedOut)) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        return clearAimState(s, '내 차례!');
+        return clearAimState(s, gameMessages.yourTurn());
       }
 
       const elapsedMs = Date.now() - s.aimStartTime;
