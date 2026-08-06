@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import Svg, { Circle, Defs, G, Line, LinearGradient, Rect, Stop, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Defs, G, Line, LinearGradient, RadialGradient, Rect, Stop, Text as SvgText } from 'react-native-svg';
+import { DEFAULT_FIELD_THEME, FieldTheme, getFieldThemePalette } from '../constants/fieldThemes';
 import { GK_BAR_THICKNESS } from '../constants/game';
 import { colors } from '../constants/theme';
 import { BallSkin, CountryCode } from '../types/customize';
@@ -29,6 +30,7 @@ interface Props {
   turn: Turn;
   phase: GamePhase;
   ballSkin?: BallSkin;
+  theme?: FieldTheme;
   playerCountryCode?: CountryCode;
   aiCountryCode?: CountryCode;
 }
@@ -50,9 +52,13 @@ export function SideViewField({
   turn,
   phase,
   ballSkin = 'legacy',
+  theme = DEFAULT_FIELD_THEME,
   playerCountryCode,
   aiCountryCode,
 }: Props) {
+  const palette = getFieldThemePalette(theme);
+  const grassId = `grass-${theme}`;
+  const ambientId = `ambient-${theme}`;
   const { goalZone } = field;
   const goalTop = goalZone.top;
   const goalBottom = goalZone.bottom;
@@ -71,17 +77,30 @@ export function SideViewField({
       : null;
 
   return (
-    <View style={[styles.container, { width, height }]}>
+    <View style={[styles.container, { width, height, borderColor: palette.containerBorder }]}>
       <Svg width={width} height={height}>
         <Defs>
-          <LinearGradient id="grass" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor="#2d6a4f" />
-            <Stop offset="0.5" stopColor="#40916c" />
-            <Stop offset="1" stopColor="#2d6a4f" />
+          <LinearGradient id={grassId} x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={palette.grassStops[0]} />
+            <Stop offset="0.5" stopColor={palette.grassStops[1]} />
+            <Stop offset="1" stopColor={palette.grassStops[2]} />
           </LinearGradient>
+          {palette.ambientOverlay && (
+            <RadialGradient
+              id={ambientId}
+              cx="50%"
+              cy="0%"
+              rx="70%"
+              ry="90%"
+              gradientUnits="objectBoundingBox"
+            >
+              <Stop offset="0" stopColor={palette.ambientOverlay.center} />
+              <Stop offset="1" stopColor={palette.ambientOverlay.edge} />
+            </RadialGradient>
+          )}
         </Defs>
 
-        <Rect x={0} y={0} width={width} height={height} fill="url(#grass)" />
+        <Rect x={0} y={0} width={width} height={height} fill={`url(#${grassId})`} />
 
         {/* Stripes */}
         {Array.from({ length: 8 }).map((_, i) => (
@@ -91,9 +110,20 @@ export function SideViewField({
             y={0}
             width={width / 16}
             height={height}
-            fill="rgba(0,0,0,0.06)"
+            fill={`rgba(0,0,0,${palette.stripeOpacity})`}
           />
         ))}
+
+        {palette.ambientOverlay && (
+          <Rect
+            x={0}
+            y={0}
+            width={width}
+            height={height}
+            fill={`url(#${ambientId})`}
+            opacity={palette.ambientOverlay.opacity}
+          />
+        )}
 
         {playerCountryCode && (
           <FieldFlagWatermark
@@ -115,9 +145,9 @@ export function SideViewField({
         )}
 
         {/* Center line & circle */}
-        <Line x1={width / 2} y1={0} x2={width / 2} y2={height} stroke="rgba(255,255,255,0.35)" strokeWidth={2} />
-        <Circle cx={width / 2} cy={height / 2} r={40} stroke="rgba(255,255,255,0.35)" strokeWidth={2} fill="none" />
-        <Circle cx={width / 2} cy={height / 2} r={4} fill="rgba(255,255,255,0.5)" />
+        <Line x1={width / 2} y1={0} x2={width / 2} y2={height} stroke={palette.lineColor} strokeWidth={2} />
+        <Circle cx={width / 2} cy={height / 2} r={40} stroke={palette.lineColor} strokeWidth={2} fill="none" />
+        <Circle cx={width / 2} cy={height / 2} r={4} fill={palette.borderColor} />
 
         {/* Field border */}
         <Rect
@@ -126,15 +156,15 @@ export function SideViewField({
           width={width - 2}
           height={height - 2}
           fill="none"
-          stroke="rgba(255,255,255,0.5)"
+          stroke={palette.borderColor}
           strokeWidth={2}
         />
 
         {/* Left goal */}
         <G>
-          <Rect x={0} y={0} width={8} height={goalTop} fill="#1b4332" stroke="rgba(255,255,255,0.4)" strokeWidth={1} />
-          <Rect x={0} y={goalBottom} width={8} height={height - goalBottom} fill="#1b4332" stroke="rgba(255,255,255,0.4)" strokeWidth={1} />
-          <Rect x={0} y={goalTop} width={goalZone.width} height={goalH} fill="rgba(0,0,0,0.35)" stroke={colors.neonGold} strokeWidth={2} />
+          <Rect x={0} y={0} width={8} height={goalTop} fill={palette.goalPostFill} stroke={palette.goalPostStroke} strokeWidth={1} />
+          <Rect x={0} y={goalBottom} width={8} height={height - goalBottom} fill={palette.goalPostFill} stroke={palette.goalPostStroke} strokeWidth={1} />
+          <Rect x={0} y={goalTop} width={goalZone.width} height={goalH} fill={palette.goalNetFill} stroke={colors.neonGold} strokeWidth={2} />
           {Array.from({ length: 4 }).map((_, i) => (
             <Line
               key={`lg-${i}`}
@@ -142,7 +172,7 @@ export function SideViewField({
               y1={goalTop + (goalH / 3) * i}
               x2={goalZone.width}
               y2={goalTop + (goalH / 3) * i}
-              stroke="rgba(255,215,0,0.2)"
+              stroke={palette.goalNetLine}
               strokeWidth={1}
             />
           ))}
@@ -153,14 +183,14 @@ export function SideViewField({
 
         {/* Right goal */}
         <G>
-          <Rect x={width - 8} y={0} width={8} height={goalTop} fill="#1b4332" stroke="rgba(255,255,255,0.4)" strokeWidth={1} />
-          <Rect x={width - 8} y={goalBottom} width={8} height={height - goalBottom} fill="#1b4332" stroke="rgba(255,255,255,0.4)" strokeWidth={1} />
+          <Rect x={width - 8} y={0} width={8} height={goalTop} fill={palette.goalPostFill} stroke={palette.goalPostStroke} strokeWidth={1} />
+          <Rect x={width - 8} y={goalBottom} width={8} height={height - goalBottom} fill={palette.goalPostFill} stroke={palette.goalPostStroke} strokeWidth={1} />
           <Rect
             x={width - goalZone.width}
             y={goalTop}
             width={goalZone.width}
             height={goalH}
-            fill="rgba(0,0,0,0.35)"
+            fill={palette.goalNetFill}
             stroke={colors.neonGold}
             strokeWidth={2}
           />
@@ -171,7 +201,7 @@ export function SideViewField({
               y1={goalTop + (goalH / 3) * i}
               x2={width}
               y2={goalTop + (goalH / 3) * i}
-              stroke="rgba(255,215,0,0.2)"
+              stroke={palette.goalNetLine}
               strokeWidth={1}
             />
           ))}
@@ -273,6 +303,5 @@ const styles = StyleSheet.create({
     overflow: 'visible',
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: colors.cardBorder,
   },
 });
