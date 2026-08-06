@@ -19,6 +19,12 @@
       "normal": "Normal",
       "hard": "Hard"
     },
+    "fieldTheme": "Field Theme",
+    "fieldThemeOptions": {
+      "day": "Day",
+      "night": "Night",
+      "indoor": "Indoor"
+    },
     "back": "BACK"
   },
   "customize": {

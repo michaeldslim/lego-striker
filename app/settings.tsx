@@ -8,6 +8,7 @@ import { ScreenBackground } from '../src/components/ScreenBackground';
 import { NeonButton } from '../src/components/NeonButton';
 import { BGM_VOLUME_MAX_LEVEL } from '../src/constants/audio';
 import { GK_DIFFICULTY_OPTIONS, GkDifficulty } from '../src/constants/gkDifficulty';
+import { FIELD_THEME_OPTIONS, FieldTheme } from '../src/constants/fieldThemes';
 import { colors, fonts, spacing } from '../src/constants/theme';
 import { useSettings } from '../src/contexts/SettingsContext';
 import { AppLanguage } from '../src/types/settings';
@@ -64,7 +65,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const screenPadding = useScreenPadding();
   const { t } = useTranslation();
-  const { bgmEnabled, bgmVolumeLevel, language, soundEnabled, hapticsEnabled, gkDifficulty, setBgmEnabled, setBgmVolumeLevel, setLanguage, setSoundEnabled, setHapticsEnabled, setGkDifficulty } =
+  const { bgmEnabled, bgmVolumeLevel, language, soundEnabled, hapticsEnabled, gkDifficulty, fieldTheme, setBgmEnabled, setBgmVolumeLevel, setLanguage, setSoundEnabled, setHapticsEnabled, setGkDifficulty, setFieldTheme } =
     useSettings();
 
   return (
@@ -155,6 +156,13 @@ export default function SettingsScreen() {
               onChange={setGkDifficulty}
               labelFor={(option) => t(`settings.gkDifficultyOptions.${option}`)}
             />
+            <Text style={[styles.label, styles.matchRowSpacing]}>{t('settings.fieldTheme')}</Text>
+            <SegmentedToggle<FieldTheme>
+              options={FIELD_THEME_OPTIONS}
+              value={fieldTheme}
+              onChange={setFieldTheme}
+              labelFor={(option) => t(`settings.fieldThemeOptions.${option}`)}
+            />
           </View>
         </ScrollView>
       </View>
@@ -213,6 +221,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 2,
     textTransform: 'uppercase',
+  },
+  matchRowSpacing: {
+    marginTop: spacing.sm,
   },
   volumeSection: {
     gap: spacing.xs,

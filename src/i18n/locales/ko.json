@@ -19,6 +19,12 @@
       "normal": "보통",
       "hard": "어려움"
     },
+    "fieldTheme": "필드 테마",
+    "fieldThemeOptions": {
+      "day": "낮",
+      "night": "밤",
+      "indoor": "실내"
+    },
     "back": "뒤로"
   },
   "customize": {
