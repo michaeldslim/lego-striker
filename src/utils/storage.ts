@@ -6,6 +6,7 @@ import {
   BGM_VOLUME_MAX_LEVEL,
 } from '../constants/audio';
 import { DEFAULT_SQUAD_SIZE, LEADERBOARD_SIZE } from '../constants/game';
+import { DEFAULT_FIELD_THEME, FieldTheme, parseFieldTheme } from '../constants/fieldThemes';
 import { DEFAULT_GK_DIFFICULTY, GkDifficulty, parseGkDifficulty } from '../constants/gkDifficulty';
 import { DEFAULT_BALL_SKIN, DEFAULT_COUNTRY, DEFAULT_PLAYER_COLORS, parseBallSkin, parseCountryCode } from '../constants/skins';
 import { getDeviceLanguage } from '../i18n';
@@ -28,6 +29,7 @@ export interface GamePreferences {
   soundEnabled: boolean;
   hapticsEnabled: boolean;
   gkDifficulty: GkDifficulty;
+  fieldTheme: FieldTheme;
 }
 
 const DEFAULT_PREFS: GamePreferences = {
@@ -41,6 +43,7 @@ const DEFAULT_PREFS: GamePreferences = {
   soundEnabled: DEFAULT_SOUND_ENABLED,
   hapticsEnabled: DEFAULT_HAPTICS_ENABLED,
   gkDifficulty: DEFAULT_GK_DIFFICULTY,
+  fieldTheme: DEFAULT_FIELD_THEME,
 };
 
 function isValidHex(color: unknown): color is string {
@@ -91,6 +94,7 @@ export async function loadPreferences(): Promise<GamePreferences> {
         soundEnabled: parsed.soundEnabled !== false,
         hapticsEnabled: parsed.hapticsEnabled !== false,
         gkDifficulty: parseGkDifficulty(parsed.gkDifficulty),
+        fieldTheme: parseFieldTheme(parsed.fieldTheme),
       };
     }
   } catch {
@@ -109,6 +113,7 @@ export async function loadPreferences(): Promise<GamePreferences> {
     soundEnabled: DEFAULT_PREFS.soundEnabled,
     hapticsEnabled: DEFAULT_PREFS.hapticsEnabled,
     gkDifficulty: DEFAULT_PREFS.gkDifficulty,
+    fieldTheme: DEFAULT_PREFS.fieldTheme,
   };
 }
 
@@ -130,6 +135,8 @@ export async function savePreferences(patch: Partial<GamePreferences>): Promise<
       patch.hapticsEnabled !== undefined ? patch.hapticsEnabled : current.hapticsEnabled,
     gkDifficulty:
       patch.gkDifficulty !== undefined ? parseGkDifficulty(patch.gkDifficulty) : current.gkDifficulty,
+    fieldTheme:
+      patch.fieldTheme !== undefined ? parseFieldTheme(patch.fieldTheme) : current.fieldTheme,
   };
   await AsyncStorage.setItem(PREFS_KEY, JSON.stringify(updated));
   await AsyncStorage.setItem(SQUAD_SIZE_KEY, String(updated.squadSize));

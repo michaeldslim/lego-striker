@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import i18n from '../i18n';
+import { DEFAULT_FIELD_THEME, FieldTheme } from '../constants/fieldThemes';
 import { DEFAULT_GK_DIFFICULTY, GkDifficulty } from '../constants/gkDifficulty';
 import { AppLanguage } from '../types/settings';
 import { loadPreferences, savePreferences } from '../utils/storage';
@@ -12,12 +13,14 @@ interface SettingsContextValue {
   soundEnabled: boolean;
   hapticsEnabled: boolean;
   gkDifficulty: GkDifficulty;
+  fieldTheme: FieldTheme;
   setBgmEnabled: (enabled: boolean) => void;
   setBgmVolumeLevel: (level: number) => void;
   setLanguage: (language: AppLanguage) => void;
   setSoundEnabled: (enabled: boolean) => void;
   setHapticsEnabled: (enabled: boolean) => void;
   setGkDifficulty: (difficulty: GkDifficulty) => void;
+  setFieldTheme: (theme: FieldTheme) => void;
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -30,6 +33,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [soundEnabled, setSoundEnabledState] = useState(true);
   const [hapticsEnabled, setHapticsEnabledState] = useState(true);
   const [gkDifficulty, setGkDifficultyState] = useState<GkDifficulty>(DEFAULT_GK_DIFFICULTY);
+  const [fieldTheme, setFieldThemeState] = useState<FieldTheme>(DEFAULT_FIELD_THEME);
 
   useEffect(() => {
     loadPreferences().then((prefs) => {
@@ -39,6 +43,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       setSoundEnabledState(prefs.soundEnabled);
       setHapticsEnabledState(prefs.hapticsEnabled);
       setGkDifficultyState(prefs.gkDifficulty);
+      setFieldThemeState(prefs.fieldTheme);
       void i18n.changeLanguage(prefs.language);
       setReady(true);
     });
@@ -75,6 +80,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     void savePreferences({ gkDifficulty: difficulty });
   }, []);
 
+  const setFieldTheme = useCallback((theme: FieldTheme) => {
+    setFieldThemeState(theme);
+    void savePreferences({ fieldTheme: theme });
+  }, []);
+
   const value = useMemo(
     () => ({
       ready,
@@ -84,12 +94,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       soundEnabled,
       hapticsEnabled,
       gkDifficulty,
+      fieldTheme,
       setBgmEnabled,
       setBgmVolumeLevel,
       setLanguage,
       setSoundEnabled,
       setHapticsEnabled,
       setGkDifficulty,
+      setFieldTheme,
     }),
     [
       ready,
@@ -99,12 +111,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       soundEnabled,
       hapticsEnabled,
       gkDifficulty,
+      fieldTheme,
       setBgmEnabled,
       setBgmVolumeLevel,
       setLanguage,
       setSoundEnabled,
       setHapticsEnabled,
       setGkDifficulty,
+      setFieldTheme,
     ]
   );
 
