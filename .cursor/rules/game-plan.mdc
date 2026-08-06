@@ -69,15 +69,16 @@ A **2D side-view flick soccer** game in the Football Striker style. Flick Lego m
 | Zone | Content |
 |------|---------|
 | **Left hero panel** (`flex: 1`) | Animated logo, win count, **KICK OFF** + **LEADERBOARD** + **SETTINGS** — vertically & horizontally centered in remaining width |
-| **Right menu column** (`width: 320`) | Scrollable **SquadPicker**, **UniformColorPicker**, **BallSkinPicker** (compact) · **CountryPicker** pinned at bottom |
+| **Right menu column** (`width: 320`) | Scrollable **SquadPicker**, **UniformColorPicker**, **BallSkinPicker** (compact) · **CountryPicker** pinned at bottom — **full**; no room for v2 pickers |
 
 - Selections persist via `loadPreferences` / `savePreferences` (`AsyncStorage`)
 - Hero content max width ~280px; action buttons stretch full hero width
+- **v2**: GK difficulty in **Settings** ✅ · field theme still pending (home menu column full)
 - Implemented in `app/index.tsx`
 
 ### Settings Screen (`app/settings.tsx`)
 
-Landscape-friendly two-column layout (header + options panel).
+Landscape-friendly two-column layout (header + scrollable options panel).
 
 | Control | Description |
 |---------|-------------|
@@ -86,10 +87,13 @@ Landscape-friendly two-column layout (header + options panel).
 | **Sound effects** | Toggle on/off — persisted as `soundEnabled` |
 | **Haptics** | Toggle on/off — persisted as `hapticsEnabled` |
 | **Language** | **KO / EN** segmented toggle — persisted as `language`; drives `i18next` |
+| **GK difficulty** | ✅ **Easy / Normal / Hard** segmented toggle in **Match** card — persisted as `gkDifficulty` |
+| **Field theme** *(v2 pending)* | **Day / Night / Indoor** segmented toggle or compact thumbnails — persisted as `fieldTheme` |
 
 - BGM: `assets/sounds/playing.mp3` looped via `BackgroundMusic` in root layout
-- Settings state: `SettingsContext` + `loadPreferences` / `savePreferences`
+- Settings state: `SettingsContext` + `loadPreferences` / `savePreferences` (includes `gkDifficulty`; `fieldTheme` when field themes ship)
 - Default BGM volume level: **2** (~20%)
+- **Match** card below Language — GK difficulty row ✅; field theme row when implemented
 
 ### Localization (i18n)
 
@@ -135,10 +139,11 @@ Landscape-friendly two-column layout (header + options panel).
 
 | Property | Value (draft) |
 |----------|---------------|
-| Bar length | ~75% of goal width |
-| Thickness | 6–8px |
-| Move period | same on both sides (`GK_BAR_PERIOD_MS` ≈ 1.1s) |
+| Bar length | ~75% of goal width ( **`barLengthRatio`** — preset-driven in v2) |
+| Thickness | 12px (`GK_BAR_THICKNESS`) |
+| Move period | same on both sides (**`barPeriodMs`** — preset-driven in v2; Normal ≈ 1100ms) |
 | Bounce coefficient | 0.65 |
+| Goal mouth height | **`goalHeightRatio`** of field height (preset-driven in v2; Normal = 0.38) |
 
 ---
 
@@ -419,6 +424,121 @@ Short, upbeat tones suited to casual turn-based play. Not overwhelming; repeatab
 - [x] Sound ON/OFF setting + persistence
 - [x] `game-plan` / constants updated
 
+## v2 — GK Difficulty, Special Shots & Field Themes
+
+Match depth and visual variety. Builds on v1.3 power/aim, v1.1 GK bar, and v1.4 customization patterns (pickers + `AsyncStorage`).
+
+### GK Difficulty Presets ✅
+
+Symmetric **Easy / Normal / Hard** presets applied to **both goals** (same match conditions for player and AI).
+
+| Lever | Easy | Normal | Hard |
+|-------|------|--------|------|
+| Bar period (`barPeriodMs`) | 1400 | 1100 | 800 |
+| Bar length ratio (`barLengthRatio`) | 0.62 | 0.75 | 0.88 |
+| Goal mouth height (`goalHeightRatio`) | 0.42 | 0.38 | 0.32 |
+
+- `GK_BAR_THICKNESS` and `GK_BOUNCE` stay fixed unless playtesting says otherwise
+- `goalWidth` (depth) unchanged — vertical opening is the gameplay lever
+- Default: **Normal** (matches pre-v2 constants)
+
+**UI & persistence**
+
+- Segmented picker in **Settings** (`app/settings.tsx`) — **Match** card (`SegmentedToggle`), same style as language toggle
+- `gkDifficulty: 'easy' | 'normal' | 'hard'` in `GamePreferences` → `loadPreferences` / `savePreferences`
+- `SettingsContext` exposes `gkDifficulty` / `setGkDifficulty`
+- Game reads saved pref on mount (`app/game.tsx` → `useSoccerEngine.startGame`) — no route param
+- i18n: `settings.match`, `settings.gkDifficulty`, `settings.gkDifficultyOptions.*` in `en.json` / `ko.json`
+
+**Implementation**
+
+- Types + presets: `GkDifficulty`, `GkDifficultyProfile` → `src/constants/gkDifficulty.ts`
+- Parameterized: `src/utils/gk.ts`, `src/utils/layout.ts` (`getGoalZone`), `src/utils/field.ts`, `src/utils/physics.ts`, `src/components/SideViewField.tsx` (`gkBarLength` prop), `src/hooks/useSoccerEngine.ts` (`gkProfile` on match state)
+- `createGkBars(field, barLengthRatio)` · `getGkBarCenterY(..., barPeriodMs)` · `getGkBarRects(..., barPeriodMs)` · `stepPhysics(..., barPeriodMs)`
+
+### Special Shots — Curve
+
+Optional **curve** on ball trajectory after a kick — layered on v1.3 hold-charge + aim (no pull-back).
+
+**Trigger (draft)**
+
+- Release while **aiming** (finger dragged ≥ `AIM_DIRECTION_MIN`) with power ratio ≥ `SUPER_POWER_RATIO` **or** a dedicated “curve window” at high power
+- Curve direction follows aim side: shot curves **away from** the vertical (left/right of character)
+
+**Physics**
+
+- On kick transfer (`resolveKick` / post-collision), apply initial `ball.vy` bias or ongoing lateral acceleration for a short window
+- Tunable constants: `CURVE_FORCE`, `CURVE_DURATION_MS`, min power threshold
+- AI: optional simple curve on hard GK preset later (out of initial v2 scope)
+
+**Feedback**
+
+- Brief trail or arc hint on `PowerGauge` aim line when curve-eligible
+- Distinct SFX optional (`curve` or reuse `super` at lower priority)
+- Haptic: `Medium` or `Rigid` on curve kick
+
+**UI**
+
+- **No Settings control** — curve is learned gameplay (power + aim), not a toggle
+
+### Field Themes
+
+Alternate **grass / stadium** looks — visual only; physics and hitboxes unchanged.
+
+| Theme | Description |
+|-------|-------------|
+| `day` | Current green grass + stripes (default) |
+| `night` | Darker turf, subtle floodlight gradient, dimmer line colors |
+| `indoor` | Hard court / futsal floor tones, wall color shift |
+
+- Flag watermark (v1.4) and GK bars render **above** theme layer — same z-order as today
+- Uniform & ball skins remain user-selected (v1.4); themes do not override them
+
+**UI & persistence**
+
+- Picker in **Settings** — **Match** card with **Day / Night / Indoor** (segmented toggle or small inline thumbnails)
+- `fieldTheme: 'day' | 'night' | 'indoor'` in `GamePreferences`
+- Optional mini swatch preview in the settings row (no full home thumbnail grid)
+- i18n theme names
+
+**Implementation**
+
+- Types: `FieldTheme` → `src/types/customize.ts`
+- Constants: `FIELD_THEMES` palette (grass, stripe, wall, sky/ambient) → `src/constants/skins.ts` or `src/constants/fieldThemes.ts`
+- `SideViewField` accepts `theme` prop; SVG fills from theme map
+- `app/game.tsx` passes saved theme into field component
+
+### v2 Checklist
+
+**GK difficulty**
+
+- [x] `GkDifficulty` type + `GK_DIFFICULTY_PRESETS` constants
+- [x] Parameterize `gk.ts`, `getGoalZone`, physics goal mouth, `SideViewField` bar length
+- [x] `gkDifficulty` preference + persistence
+- [x] Settings **Match** card picker UI + i18n
+- [x] Wire profile into `useSoccerEngine` match init
+- [ ] Playtest & tune Easy / Hard values (initial constants shipped)
+
+**Special shots**
+
+- [ ] Curve eligibility rules (power + aim gate)
+- [ ] Ball curve force in kick / physics step
+- [ ] PowerGauge / aim UI hint when curve-ready
+- [ ] Constants in `src/constants/game.ts` + tune feel
+- [ ] Optional curve SFX / haptic
+
+**Field themes**
+
+- [ ] `FieldTheme` type + `FIELD_THEMES` color maps
+- [ ] `SideViewField` theme variants (day / night / indoor)
+- [ ] `fieldTheme` preference + persistence
+- [ ] Settings **Match** card theme picker + i18n
+- [ ] Apply theme in game screen
+
+**Docs**
+
+- [ ] `game-plan` / types / constants updated
+
 ---
 
 ## Roadmap
@@ -431,7 +551,7 @@ Short, upbeat tones suited to casual turn-based play. Not overwhelming; repeatab
 | **v1.3** | Hold charging, circular power/aim UI, cancel, kick-ready pose, AI wind-up | ✅ Done |
 | **v1.4** | Uniform colors, ball design, country selection, field flag & home layout | ✅ Done |
 | **v1.5** | BGM + settings + i18n; SFX, haptic extensions, sound/haptics toggles | ✅ Done |
-| **v2** | League mode, achievements, difficulty presets, field themes | |
+| **v2** | GK difficulty ✅ · curve special shots · field themes (day / night / indoor) | In progress |
 
 **Out of scope (not planned)**: 2P local, online multiplayer
 
@@ -455,8 +575,5 @@ Short, upbeat tones suited to casual turn-based play. Not overwhelming; repeatab
 
 ## Future Ideas
 
-1. **GK difficulty**: bar speed, length, goal mouth size presets
-2. **Special shots**: curve shot (power charge done in v1.3)
-3. **Field themes**: night / indoor backgrounds (uniforms & ball in v1.4)
-4. **Replay**: last goal slow-mo
-5. **More BGM tracks**: alternate stadium / menu themes
+1. **League mode** — tiered opponents, season stats
+2. **Achievements** — goals, saves, SUPER shots, win streaks
