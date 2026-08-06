@@ -7,9 +7,41 @@ import { useScreenPadding } from '../src/hooks/useScreenPadding';
 import { ScreenBackground } from '../src/components/ScreenBackground';
 import { NeonButton } from '../src/components/NeonButton';
 import { BGM_VOLUME_MAX_LEVEL } from '../src/constants/audio';
+import { GK_DIFFICULTY_OPTIONS, GkDifficulty } from '../src/constants/gkDifficulty';
 import { colors, fonts, spacing } from '../src/constants/theme';
 import { useSettings } from '../src/contexts/SettingsContext';
 import { AppLanguage } from '../src/types/settings';
+
+function SegmentedToggle<T extends string>({
+  options,
+  value,
+  onChange,
+  labelFor,
+}: {
+  options: readonly T[];
+  value: T;
+  onChange: (next: T) => void;
+  labelFor: (option: T) => string;
+}) {
+  return (
+    <View style={styles.segmentRow}>
+      {options.map((option) => {
+        const selected = value === option;
+        return (
+          <Pressable
+            key={option}
+            onPress={() => onChange(option)}
+            style={[styles.segmentOption, selected && styles.segmentOptionSelected]}
+          >
+            <Text style={[styles.segmentText, selected && styles.segmentTextSelected]}>
+              {labelFor(option)}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
 
 function LanguageToggle({
   value,
@@ -19,22 +51,12 @@ function LanguageToggle({
   onChange: (language: AppLanguage) => void;
 }) {
   return (
-    <View style={styles.languageRow}>
-      {(['ko', 'en'] as const).map((lang) => {
-        const selected = value === lang;
-        return (
-          <Pressable
-            key={lang}
-            onPress={() => onChange(lang)}
-            style={[styles.languageOption, selected && styles.languageOptionSelected]}
-          >
-            <Text style={[styles.languageText, selected && styles.languageTextSelected]}>
-              {lang.toUpperCase()}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
+    <SegmentedToggle
+      options={['ko', 'en'] as const}
+      value={value}
+      onChange={onChange}
+      labelFor={(lang) => lang.toUpperCase()}
+    />
   );
 }
 
@@ -42,7 +64,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const screenPadding = useScreenPadding();
   const { t } = useTranslation();
-  const { bgmEnabled, bgmVolumeLevel, language, soundEnabled, hapticsEnabled, setBgmEnabled, setBgmVolumeLevel, setLanguage, setSoundEnabled, setHapticsEnabled } =
+  const { bgmEnabled, bgmVolumeLevel, language, soundEnabled, hapticsEnabled, gkDifficulty, setBgmEnabled, setBgmVolumeLevel, setLanguage, setSoundEnabled, setHapticsEnabled, setGkDifficulty } =
     useSettings();
 
   return (
@@ -123,6 +145,17 @@ export default function SettingsScreen() {
             <Text style={styles.label}>{t('settings.language')}</Text>
             <LanguageToggle value={language} onChange={setLanguage} />
           </View>
+
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>{t('settings.match')}</Text>
+            <Text style={styles.label}>{t('settings.gkDifficulty')}</Text>
+            <SegmentedToggle<GkDifficulty>
+              options={GK_DIFFICULTY_OPTIONS}
+              value={gkDifficulty}
+              onChange={setGkDifficulty}
+              labelFor={(option) => t(`settings.gkDifficultyOptions.${option}`)}
+            />
+          </View>
         </ScrollView>
       </View>
     </ScreenBackground>
@@ -174,6 +207,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
+  sectionTitle: {
+    color: colors.neonGold,
+    fontSize: fonts.caption,
+    fontWeight: '800',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+  },
   volumeSection: {
     gap: spacing.xs,
     paddingTop: spacing.xs,
@@ -204,11 +244,11 @@ const styles = StyleSheet.create({
     fontSize: fonts.caption,
     fontVariant: ['tabular-nums'],
   },
-  languageRow: {
+  segmentRow: {
     flexDirection: 'row',
     gap: spacing.sm,
   },
-  languageOption: {
+  segmentOption: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: spacing.sm,
@@ -217,17 +257,18 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     backgroundColor: 'rgba(255,255,255,0.04)',
   },
-  languageOptionSelected: {
+  segmentOptionSelected: {
     borderColor: colors.neonCyan,
     backgroundColor: 'rgba(0,229,255,0.12)',
   },
-  languageText: {
+  segmentText: {
     color: colors.textMuted,
-    fontSize: fonts.body,
+    fontSize: fonts.caption,
     fontWeight: '800',
-    letterSpacing: 1.5,
+    letterSpacing: 0.5,
+    textAlign: 'center',
   },
-  languageTextSelected: {
+  segmentTextSelected: {
     color: colors.neonCyan,
   },
 });

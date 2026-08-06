@@ -9,6 +9,7 @@ import { HUD } from '../src/components/HUD';
 import { useScreenPadding } from '../src/hooks/useScreenPadding';
 import { useSoccerEngine } from '../src/hooks/useSoccerEngine';
 import { GOALS_TO_WIN } from '../src/constants/game';
+import { DEFAULT_GK_DIFFICULTY } from '../src/constants/gkDifficulty';
 import { DEFAULT_BALL_SKIN, DEFAULT_COUNTRY, DEFAULT_PLAYER_COLORS, pickRandomCountry } from '../src/constants/skins';
 import { spacing } from '../src/constants/theme';
 import { BallSkin, CountryCode, TeamColors } from '../src/types/customize';
@@ -32,6 +33,7 @@ export default function GameScreen() {
   const boardOriginRef = useRef({ x: 0, y: 0 });
   const layoutSizeRef = useRef<{ width: number; height: number } | null>(null);
   const playerColorsRef = useRef<TeamColors>(DEFAULT_PLAYER_COLORS);
+  const gkDifficultyRef = useRef(DEFAULT_GK_DIFFICULTY);
   const [ballSkin, setBallSkin] = useState<BallSkin>(DEFAULT_BALL_SKIN);
   const [countryCode, setCountryCode] = useState<CountryCode>(DEFAULT_COUNTRY);
   const [aiCountryCode, setAiCountryCode] = useState<CountryCode>(DEFAULT_COUNTRY);
@@ -42,12 +44,19 @@ export default function GameScreen() {
     gameInitRef.current = true;
     navigatedRef.current = false;
     const { width, height } = layoutSizeRef.current;
-    startGame(Math.round(width), Math.round(height), squadSize, playerColorsRef.current);
+    startGame(
+      Math.round(width),
+      Math.round(height),
+      squadSize,
+      playerColorsRef.current,
+      gkDifficultyRef.current
+    );
   }, [squadSize, startGame]);
 
   useEffect(() => {
     loadPreferences().then((prefs) => {
       playerColorsRef.current = prefs.teamColors;
+      gkDifficultyRef.current = prefs.gkDifficulty;
       setBallSkin(prefs.ballSkin);
       setCountryCode(prefs.countryCode);
       setAiCountryCode(pickRandomCountry(prefs.countryCode));
@@ -156,6 +165,7 @@ export default function GameScreen() {
                   ball={state.ball}
                   characters={state.characters}
                   gkBarYs={state.gkBarYs}
+                  gkBarLength={state.gkBars[0]?.length ?? 0}
                   selectedId={state.selectedId}
                   aimStart={state.aimStart}
                   aimCurrent={state.aimCurrent}

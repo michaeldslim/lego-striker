@@ -12,6 +12,13 @@
     "sound": "효과음",
     "haptics": "햅틱",
     "language": "언어",
+    "match": "경기",
+    "gkDifficulty": "골키퍼 난이도",
+    "gkDifficultyOptions": {
+      "easy": "쉬움",
+      "normal": "보통",
+      "hard": "어려움"
+    },
     "back": "뒤로"
   },
   "customize": {

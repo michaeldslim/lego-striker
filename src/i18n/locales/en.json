@@ -12,6 +12,13 @@
     "sound": "Sound Effects",
     "haptics": "Haptics",
     "language": "Language",
+    "match": "Match",
+    "gkDifficulty": "GK Difficulty",
+    "gkDifficultyOptions": {
+      "easy": "Easy",
+      "normal": "Normal",
+      "hard": "Hard"
+    },
     "back": "BACK"
   },
   "customize": {

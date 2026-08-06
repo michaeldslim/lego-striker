@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, G, Line, LinearGradient, Rect, Stop, Text as SvgText } from 'react-native-svg';
-import { GK_BAR_LENGTH_RATIO, GK_BAR_THICKNESS } from '../constants/game';
+import { GK_BAR_THICKNESS } from '../constants/game';
 import { colors } from '../constants/theme';
 import { BallSkin, CountryCode } from '../types/customize';
 import { Ball, Character, FieldBounds, GamePhase, Turn } from '../types/game';
@@ -19,6 +19,7 @@ interface Props {
   ball: Ball;
   characters: Character[];
   gkBarYs: Record<Turn, number>;
+  gkBarLength: number;
   selectedId: string | null;
   aimStart: { x: number; y: number } | null;
   aimCurrent: { x: number; y: number } | null;
@@ -39,6 +40,7 @@ export function SideViewField({
   ball,
   characters,
   gkBarYs,
+  gkBarLength,
   selectedId,
   aimStart,
   aimCurrent,
@@ -55,7 +57,7 @@ export function SideViewField({
   const goalTop = goalZone.top;
   const goalBottom = goalZone.bottom;
   const goalH = goalBottom - goalTop;
-  const barLength = goalZone.width * GK_BAR_LENGTH_RATIO;
+  const barLength = gkBarLength;
   const flagHeight = height * 0.055;
   const flagPadX = width * 0.04;
   const flagPadY = height * 0.05;
