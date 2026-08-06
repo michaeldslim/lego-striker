@@ -456,30 +456,42 @@ Symmetric **Easy / Normal / Hard** presets applied to **both goals** (same match
 - Parameterized: `src/utils/gk.ts`, `src/utils/layout.ts` (`getGoalZone`), `src/utils/field.ts`, `src/utils/physics.ts`, `src/components/SideViewField.tsx` (`gkBarLength` prop), `src/hooks/useSoccerEngine.ts` (`gkProfile` on match state)
 - `createGkBars(field, barLengthRatio)` · `getGkBarCenterY(..., barPeriodMs)` · `getGkBarRects(..., barPeriodMs)` · `stepPhysics(..., barPeriodMs)`
 
-### Special Shots — Curve
+### Special Shots — Curve ✅
 
 Optional **curve** on ball trajectory after a kick — layered on v1.3 hold-charge + aim (no pull-back).
 
-**Trigger (draft)**
+**Trigger**
 
-- Release while **aiming** (finger dragged ≥ `AIM_DIRECTION_MIN`) with power ratio ≥ `SUPER_POWER_RATIO` **or** a dedicated “curve window” at high power
-- Curve direction follows aim side: shot curves **away from** the vertical (left/right of character)
+- Release while **aiming** with power ≥ `CURVE_MIN_POWER_RATIO` (0.68) and finger **above/below** character (|dy| ≥ 8px)
+- **Vertical drag does not change flick aim** — aim stays toward ball unless drag is mostly horizontal (`|dx| > |dy| × 0.85`)
+- Nudge finger up/down while holding horizontal aim to add curve without re-aiming
 
 **Physics**
 
-- On kick transfer (`resolveKick` / post-collision), apply initial `ball.vy` bias or ongoing lateral acceleration for a short window
-- Tunable constants: `CURVE_FORCE`, `CURVE_DURATION_MS`, min power threshold
-- AI: optional simple curve on hard GK preset later (out of initial v2 scope)
+- On kick transfer (`resolveKick`), apply `CURVE_INITIAL_VY` bias + `curveAccelVy` for `CURVE_DURATION_MS`
+- Per-step lateral accel in `applyBallCurve` (deltaMs-scaled)
+- `Character.curveDirection` set on flick, cleared on kick or turn end
+- AI: `computeAiFlick` — 난이도별 확률 커브 (Easy 0% / Normal 22% / Hard 45%), GK 막대 반대 여유 공간 방향
 
 **Feedback**
 
-- Brief trail or arc hint on `PowerGauge` aim line when curve-eligible
-- Distinct SFX optional (`curve` or reuse `super` at lower priority)
-- Haptic: `Medium` or `Rigid` on curve kick
+- Quadratic arc hint on `PowerGauge` when curve-eligible (pink); faint preview when power building
+- Pink **trail** + glow ring on ball while curving; HUD shows **CURVE!** on contact
+- `curve` feedback event reuses `super` SFX at 75% volume
+- Haptic: `Rigid` on curve kick (at ball contact)
 
 **UI**
 
 - **No Settings control** — curve is learned gameplay (power + aim), not a toggle
+
+**Implementation**
+
+- Constants: `CURVE_AIM_MIN_DY`, `CURVE_INITIAL_VY`, `CURVE_DURATION_MS`, `CURVE_FORCE` → `src/constants/game.ts`
+- Eligibility: `computeCurveDirection`, `isCurveShotEligible` → `src/utils/power.ts`
+- Physics: `resolveKick` curve transfer, `applyBallCurve`, `events.curved` → `src/utils/physics.ts`
+- Engine: `curveDirection` on flick, `deltaMs` to `stepPhysics` → `src/hooks/useSoccerEngine.ts`
+- UI: `PowerGauge` curve arc + i18n `game.curve` → `src/components/PowerGauge.tsx`
+- Feedback: `curve` event → `src/contexts/GameFeedbackContext.tsx`
 
 ### Field Themes
 
@@ -521,11 +533,12 @@ Alternate **grass / stadium** looks — visual only; physics and hitboxes unchan
 
 **Special shots**
 
-- [ ] Curve eligibility rules (power + aim gate)
-- [ ] Ball curve force in kick / physics step
-- [ ] PowerGauge / aim UI hint when curve-ready
-- [ ] Constants in `src/constants/game.ts` + tune feel
-- [ ] Optional curve SFX / haptic
+- [x] Curve eligibility rules (power + aim gate)
+- [x] Ball curve force in kick / physics step
+- [x] PowerGauge / aim UI hint when curve-ready
+- [x] Constants in `src/constants/game.ts` + tune feel
+- [x] Optional curve SFX / haptic
+- [ ] Playtest & tune curve feel (initial constants shipped)
 
 **Field themes**
 
@@ -551,7 +564,7 @@ Alternate **grass / stadium** looks — visual only; physics and hitboxes unchan
 | **v1.3** | Hold charging, circular power/aim UI, cancel, kick-ready pose, AI wind-up | ✅ Done |
 | **v1.4** | Uniform colors, ball design, country selection, field flag & home layout | ✅ Done |
 | **v1.5** | BGM + settings + i18n; SFX, haptic extensions, sound/haptics toggles | ✅ Done |
-| **v2** | GK difficulty ✅ · curve special shots · field themes (day / night / indoor) | In progress |
+| **v2** | GK difficulty ✅ · curve special shots ✅ · field themes (day / night / indoor) | In progress |
 
 **Out of scope (not planned)**: 2P local, online multiplayer
 
