@@ -1,8 +1,14 @@
-import { BALL_RADIUS, CHARACTER_RADIUS, MIN_KICK_SPEED } from '../constants/game';
-import { GkDifficultyProfile } from '../constants/gkDifficulty';
+import {
+  AI_CURVE_CHANCE,
+  AI_CURVE_MIN_POWER,
+  BALL_RADIUS,
+  CHARACTER_RADIUS,
+  MIN_KICK_SPEED,
+} from '../constants/game';
+import { GkDifficulty, GkDifficultyProfile } from '../constants/gkDifficulty';
 import { DEFAULT_PLAYER_COLORS, pickAiTeamColors } from '../constants/skins';
 import { TeamColors } from '../types/customize';
-import { Ball, Character, FieldBounds, Gender, SquadSize, Team } from '../types/game';
+import { Ball, Character, CurveKick, FieldBounds, Gender, GoalZone, SquadSize, Team } from '../types/game';
 import { createGkBars } from './gk';
 import { computeBoardLayout, getGoalZone } from './layout';
 
@@ -94,6 +100,9 @@ export function createInitialBall(field: FieldBounds): Ball {
     vx: 0,
     vy: 0,
     radius: BALL_RADIUS,
+    curveRemainingMs: 0,
+    curveAccelVy: 0,
+    curveTrail: [],
   };
 }
 
@@ -138,15 +147,51 @@ export function pickAiCharacter(characters: Character[], ball: Ball): Character 
   });
 }
 
-export function computeAiFlick(char: Character, ball: Ball): { vx: number; vy: number } {
+export interface AiFlickResult {
+  vx: number;
+  vy: number;
+  curveKick?: CurveKick;
+}
+
+/** GK 막대 반대쪽 여유 공간으로 커브 방향 선택 */
+function pickAiCurveDirection(ballY: number, gkBarY: number, goalZone: GoalZone): -1 | 1 {
+  const spaceAbove = gkBarY - goalZone.top;
+  const spaceBelow = goalZone.bottom - gkBarY;
+  if (spaceAbove > spaceBelow + 4) return -1;
+  if (spaceBelow > spaceAbove + 4) return 1;
+  return ballY < gkBarY ? 1 : -1;
+}
+
+export function computeAiFlick(
+  char: Character,
+  ball: Ball,
+  ctx?: {
+    gkBarY: number;
+    goalZone: GoalZone;
+    gkDifficulty: GkDifficulty;
+  }
+): AiFlickResult {
   const dx = ball.x - char.x;
   const dy = ball.y - char.y;
   const dist = Math.sqrt(dx * dx + dy * dy) || 1;
   const power = Math.min(Math.max(dist * 0.22, MIN_KICK_SPEED + 4), 22);
   const jitter = (Math.random() - 0.5) * 0.08;
   const angle = Math.atan2(dy, dx) + jitter;
+
+  let curveKick: CurveKick | undefined;
+  if (ctx && power >= AI_CURVE_MIN_POWER) {
+    const chance = AI_CURVE_CHANCE[ctx.gkDifficulty];
+    if (chance > 0 && Math.random() < chance) {
+      curveKick = {
+        direction: pickAiCurveDirection(ball.y, ctx.gkBarY, ctx.goalZone),
+        strength: 0.55 + Math.random() * 0.4,
+      };
+    }
+  }
+
   return {
     vx: Math.cos(angle) * power,
     vy: Math.sin(angle) * power,
+    curveKick,
   };
 }

@@ -10,6 +10,20 @@ export interface Ball {
   vx: number;
   vy: number;
   radius: number;
+  /** 커브 잔여 시간 (ms) — 0이면 비활성 */
+  curveRemainingMs: number;
+  /** 수직 가속 (화면 y+, 아래쪽) */
+  curveAccelVy: number;
+  /** 커브 비행 궤적 (렌더용) */
+  curveTrail: { x: number; y: number }[];
+}
+
+export type CurveDirection = -1 | 1;
+
+export interface CurveKick {
+  direction: CurveDirection;
+  /** 0.5–1.0 — 조준 각도 수직 성분에 비례 */
+  strength: number;
 }
 
 export interface Character {
@@ -23,6 +37,8 @@ export interface Character {
   radius: number;
   shirtColor: string;
   pantsColor: string;
+  /** 플릭 시 커브 예약 — 킥 순간 공으로 전달 */
+  curveKick?: CurveKick;
 }
 
 export interface GoalZone {

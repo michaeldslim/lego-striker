@@ -1,4 +1,4 @@
-import { Ball, Character, FieldBounds, GoalkeeperBar } from '../types/game';
+import { Ball, Character, CurveKick, FieldBounds, GoalkeeperBar } from '../types/game';
 import {
   BALL_FRICTION,
   BALL_LOW_SPEED,
@@ -7,6 +7,10 @@ import {
   CHAR_FRICTION,
   CHAR_MIN_SPEED,
   CHAR_STOP_ON_KICK,
+  CURVE_DURATION_MS,
+  CURVE_FORCE,
+  CURVE_INITIAL_VY,
+  CURVE_TRAIL_LENGTH,
   KICK_TRANSFER,
   MAX_POWER,
   MIN_KICK_SPEED,
@@ -77,13 +81,20 @@ function separateCharacterBall(character: CircleBody, ball: CircleBody): { nx: n
   return { nx, ny };
 }
 
+interface KickableCharacter extends CircleBody {
+  curveKick?: CurveKick;
+}
+
 /**
  * Football Striker 스타일 킥: 움직이는 캐릭터가 공을 치면
  * 캐릭터는 멈추고 운동량은 공으로 전달된다.
  */
-function resolveKick(character: CircleBody, ball: CircleBody): { kicked: boolean; power: number } {
+function resolveKick(
+  character: KickableCharacter,
+  ball: Ball
+): { kicked: boolean; power: number; curved: boolean } {
   const normal = separateCharacterBall(character, ball);
-  if (!normal) return { kicked: false, power: 0 };
+  if (!normal) return { kicked: false, power: 0, curved: false };
 
   const { nx, ny } = normal;
   const charSpeedN = character.vx * nx + character.vy * ny;
@@ -91,22 +102,35 @@ function resolveKick(character: CircleBody, ball: CircleBody): { kicked: boolean
   // 캐릭터가 공 쪽으로 움직일 때만 킥
   if (charSpeedN < MIN_KICK_SPEED) {
     // 정지/느린 캐릭터 — 공만 살짝 밀어냄
-    if (speed(ball) < 0.5 && speed(character) < CHAR_MIN_SPEED) return { kicked: false, power: 0 };
+    if (speed(ball) < 0.5 && speed(character) < CHAR_MIN_SPEED) {
+      return { kicked: false, power: 0, curved: false };
+    }
     const push = 0.4;
     ball.vx += nx * push;
     ball.vy += ny * push;
-    return { kicked: false, power: 0 };
+    return { kicked: false, power: 0, curved: false };
   }
 
   const kickPower = charSpeedN * KICK_TRANSFER;
   ball.vx += nx * kickPower;
   ball.vy += ny * kickPower;
 
+  let curved = false;
+  if (character.curveKick) {
+    const { direction: dir, strength } = character.curveKick;
+    ball.vy += CURVE_INITIAL_VY * dir * strength;
+    ball.curveAccelVy = CURVE_FORCE * dir * strength;
+    ball.curveRemainingMs = CURVE_DURATION_MS;
+    ball.curveTrail = [{ x: ball.x, y: ball.y }];
+    character.curveKick = undefined;
+    curved = true;
+  }
+
   // 캐릭터는 킥 후 거의 멈춤
   character.vx *= CHAR_STOP_ON_KICK;
   character.vy *= CHAR_STOP_ON_KICK;
 
-  return { kicked: true, power: Math.min(1, kickPower / MAX_POWER) };
+  return { kicked: true, power: Math.min(1, kickPower / MAX_POWER), curved };
 }
 
 /** 캐릭터끼리 부딪힘 — 약한 반발, 빠르게 감속 */
@@ -202,9 +226,30 @@ export function allSettled(ball: Ball, characters: Character[]): boolean {
 
 export type GoalScorer = 'player' | 'ai' | null;
 
+function applyBallCurve(ball: Ball, deltaMs: number): void {
+  if (ball.curveRemainingMs <= 0 || ball.curveAccelVy === 0) {
+    if (ball.curveTrail.length > 0) {
+      ball.curveTrail = [];
+    }
+    return;
+  }
+
+  const frameScale = deltaMs / (1000 / 60);
+  ball.vy += ball.curveAccelVy * frameScale;
+  ball.curveRemainingMs -= deltaMs;
+
+  ball.curveTrail = [...ball.curveTrail, { x: ball.x, y: ball.y }].slice(-CURVE_TRAIL_LENGTH);
+
+  if (ball.curveRemainingMs <= 0) {
+    ball.curveRemainingMs = 0;
+    ball.curveAccelVy = 0;
+  }
+}
+
 export interface PhysicsEvents {
   saved: boolean;
   kicked: boolean;
+  curved: boolean;
   kickPower: number;
   wallBounce: boolean;
   charBump: boolean;
@@ -216,12 +261,14 @@ export function stepPhysics(
   field: FieldBounds,
   gkBars: GoalkeeperBar[],
   elapsedMs: number,
-  barPeriodMs: number
+  barPeriodMs: number,
+  deltaMs: number
 ): { ball: Ball; characters: Character[]; goal: GoalScorer; events: PhysicsEvents } {
   const newBall: Ball = { ...ball };
   const newChars = characters.map((c) => ({ ...c }));
   let saved = false;
   let kicked = false;
+  let curved = false;
   let kickPower = 0;
   let wallBounce = false;
   let charBump = false;
@@ -256,6 +303,7 @@ export function stepPhysics(
     if (kick.kicked) {
       kicked = true;
       kickPower = Math.max(kickPower, kick.power);
+      if (kick.curved) curved = true;
     }
   }
 
@@ -268,7 +316,10 @@ export function stepPhysics(
     }
   }
 
-  // 6. 마찰 (캐릭터는 빠르게, 공은 천천히 감속)
+  // 6. 커브 가속 (잔여 시간 동안)
+  applyBallCurve(newBall, deltaMs);
+
+  // 7. 마찰 (캐릭터는 빠르게, 공은 천천히 감속)
   applyBallFriction(newBall);
   for (const ch of newChars) {
     applyCharFriction(ch);
@@ -285,7 +336,7 @@ export function stepPhysics(
     ball: newBall,
     characters: newChars,
     goal,
-    events: { saved, kicked, kickPower, wallBounce, charBump },
+    events: { saved, kicked, curved, kickPower, wallBounce, charBump },
   };
 }
 
