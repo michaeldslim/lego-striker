@@ -33,8 +33,8 @@ export function isLandscapeLayout(width: number, height: number): boolean {
   return width > height;
 }
 
-export function getGoalZone(height: number) {
-  const goalHeight = height * FIELD.goalHeightRatio;
+export function getGoalZone(height: number, goalHeightRatio: number = FIELD.goalHeightRatio) {
+  const goalHeight = height * goalHeightRatio;
   const goalTop = (height - goalHeight) / 2;
   return {
     top: goalTop,

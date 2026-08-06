@@ -215,7 +215,8 @@ export function stepPhysics(
   characters: Character[],
   field: FieldBounds,
   gkBars: GoalkeeperBar[],
-  elapsedMs: number
+  elapsedMs: number,
+  barPeriodMs: number
 ): { ball: Ball; characters: Character[]; goal: GoalScorer; events: PhysicsEvents } {
   const newBall: Ball = { ...ball };
   const newChars = characters.map((c) => ({ ...c }));
@@ -242,7 +243,7 @@ export function stepPhysics(
   }
 
   // 3. 골키퍼 막대 ↔ 공 (캐릭터는 통과)
-  const barRects = getGkBarRects(gkBars, field, elapsedMs);
+  const barRects = getGkBarRects(gkBars, field, elapsedMs, barPeriodMs);
   for (const rect of barRects) {
     if (resolveBallGkBar(newBall, rect)) {
       saved = true;

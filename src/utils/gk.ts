@@ -1,9 +1,4 @@
-import {
-  GK_BAR_LENGTH_RATIO,
-  GK_BAR_PERIOD_MS,
-  GK_BAR_THICKNESS,
-  GK_BOUNCE,
-} from '../constants/game';
+import { GK_BAR_THICKNESS, GK_BOUNCE } from '../constants/game';
 import { Ball, FieldBounds, GoalkeeperBar, GoalZone, Team } from '../types/game';
 
 export interface GkBarRect {
@@ -14,9 +9,9 @@ export interface GkBarRect {
   height: number;
 }
 
-export function createGkBars(field: FieldBounds): GoalkeeperBar[] {
+export function createGkBars(field: FieldBounds, barLengthRatio: number): GoalkeeperBar[] {
   const { goalZone, width } = field;
-  const barLength = goalZone.width * GK_BAR_LENGTH_RATIO;
+  const barLength = goalZone.width * barLengthRatio;
   return [
     { side: 'player', centerX: goalZone.width / 2, length: barLength },
     { side: 'ai', centerX: width - goalZone.width / 2, length: barLength },
@@ -24,13 +19,17 @@ export function createGkBars(field: FieldBounds): GoalkeeperBar[] {
 }
 
 /** far post ↔ near post 사이 왕복 (삼각파) */
-export function getGkBarCenterY(_side: Team, goalZone: GoalZone, elapsedMs: number): number {
-  const period = GK_BAR_PERIOD_MS;
+export function getGkBarCenterY(
+  _side: Team,
+  goalZone: GoalZone,
+  elapsedMs: number,
+  barPeriodMs: number
+): number {
   const margin = GK_BAR_THICKNESS / 2 + 2;
   const minY = goalZone.top + margin;
   const maxY = goalZone.bottom - margin;
   const range = maxY - minY;
-  const phase = (elapsedMs % period) / period;
+  const phase = (elapsedMs % barPeriodMs) / barPeriodMs;
   const t = phase < 0.5 ? phase * 2 : 2 - phase * 2;
   return minY + t * range;
 }
@@ -38,10 +37,11 @@ export function getGkBarCenterY(_side: Team, goalZone: GoalZone, elapsedMs: numb
 export function getGkBarRects(
   bars: GoalkeeperBar[],
   field: FieldBounds,
-  elapsedMs: number
+  elapsedMs: number,
+  barPeriodMs: number
 ): GkBarRect[] {
   return bars.map((bar) => {
-    const centerY = getGkBarCenterY(bar.side, field.goalZone, elapsedMs);
+    const centerY = getGkBarCenterY(bar.side, field.goalZone, elapsedMs, barPeriodMs);
     return {
       side: bar.side,
       x: bar.centerX - bar.length / 2,

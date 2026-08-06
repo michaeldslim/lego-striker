@@ -1,19 +1,20 @@
-import {
-  BALL_RADIUS,
-  CHARACTER_RADIUS,
-  MIN_KICK_SPEED,
-} from '../constants/game';
+import { BALL_RADIUS, CHARACTER_RADIUS, MIN_KICK_SPEED } from '../constants/game';
+import { GkDifficultyProfile } from '../constants/gkDifficulty';
 import { DEFAULT_PLAYER_COLORS, pickAiTeamColors } from '../constants/skins';
 import { TeamColors } from '../types/customize';
 import { Ball, Character, FieldBounds, Gender, SquadSize, Team } from '../types/game';
 import { createGkBars } from './gk';
 import { computeBoardLayout, getGoalZone } from './layout';
 
-export function getFieldBounds(width: number, height: number): FieldBounds {
+export function getFieldBounds(
+  width: number,
+  height: number,
+  gkProfile?: Pick<GkDifficultyProfile, 'goalHeightRatio'>
+): FieldBounds {
   return {
     width,
     height,
-    goalZone: getGoalZone(height),
+    goalZone: getGoalZone(height, gkProfile?.goalHeightRatio),
   };
 }
 

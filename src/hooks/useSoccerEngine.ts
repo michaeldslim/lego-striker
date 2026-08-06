@@ -8,6 +8,11 @@ import {
   SAVE_MESSAGE_MS,
   SETTLE_THRESHOLD,
 } from '../constants/game';
+import {
+  GkDifficulty,
+  GkDifficultyProfile,
+  getGkDifficultyProfile,
+} from '../constants/gkDifficulty';
 import { DEFAULT_PLAYER_COLORS, pickAiTeamColors } from '../constants/skins';
 import { useGameFeedback } from './useGameFeedback';
 import { gameMessages } from '../i18n/gameMessages';
@@ -73,6 +78,7 @@ export interface SoccerState {
   squadSize: SquadSize;
   playerColors: TeamColors;
   aiColors: TeamColors;
+  gkProfile: GkDifficultyProfile;
   message: string | null;
   lastGoalScorer: 'player' | 'ai' | null;
 }
@@ -81,19 +87,21 @@ function buildInitialState(
   viewWidth: number,
   viewHeight: number,
   squadSize: SquadSize,
-  playerColors: TeamColors = DEFAULT_PLAYER_COLORS
+  playerColors: TeamColors = DEFAULT_PLAYER_COLORS,
+  gkDifficulty: GkDifficulty = 'normal'
 ): SoccerState {
+  const gkProfile = getGkDifficultyProfile(gkDifficulty);
   const boardSize = getBoardSize(viewWidth, viewHeight);
-  const field = getFieldBounds(boardSize.width, boardSize.height);
-  const gkBars = createGkBars(field);
+  const field = getFieldBounds(boardSize.width, boardSize.height, gkProfile);
+  const gkBars = createGkBars(field, gkProfile.barLengthRatio);
   const aiColors = pickAiTeamColors(playerColors);
   return {
     ball: createInitialBall(field),
     characters: createInitialCharacters(field, squadSize, playerColors, aiColors),
     gkBars,
     gkBarYs: {
-      player: getGkBarCenterY('player', field.goalZone, 0),
-      ai: getGkBarCenterY('ai', field.goalZone, 0),
+      player: getGkBarCenterY('player', field.goalZone, 0, gkProfile.barPeriodMs),
+      ai: getGkBarCenterY('ai', field.goalZone, 0, gkProfile.barPeriodMs),
     },
     playerGoals: 0,
     aiGoals: 0,
@@ -113,6 +121,7 @@ function buildInitialState(
     squadSize,
     playerColors,
     aiColors,
+    gkProfile,
     message: null,
     lastGoalScorer: null,
   };
@@ -137,7 +146,8 @@ export function useSoccerEngine() {
       viewWidth: number,
       viewHeight: number,
       squadSize: SquadSize = 2,
-      playerColors: TeamColors = DEFAULT_PLAYER_COLORS
+      playerColors: TeamColors = DEFAULT_PLAYER_COLORS,
+      gkDifficulty: GkDifficulty = 'normal'
     ) => {
     if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
     if (goalTimerRef.current) clearTimeout(goalTimerRef.current);
@@ -146,7 +156,7 @@ export function useSoccerEngine() {
     elapsedRef.current = 0;
     lastTickRef.current = null;
     saveMessageRef.current = false;
-    setState(buildInitialState(viewWidth, viewHeight, squadSize, playerColors));
+    setState(buildInitialState(viewWidth, viewHeight, squadSize, playerColors, gkDifficulty));
   }, []);
 
   const runAiTurn = useCallback(() => {
@@ -216,8 +226,8 @@ export function useSoccerEngine() {
         if (s.phase !== 'simulating' && s.phase !== 'aiming') return s;
 
         const gkBarYs = {
-          player: getGkBarCenterY('player', s.field.goalZone, elapsed),
-          ai: getGkBarCenterY('ai', s.field.goalZone, elapsed),
+          player: getGkBarCenterY('player', s.field.goalZone, elapsed, s.gkProfile.barPeriodMs),
+          ai: getGkBarCenterY('ai', s.field.goalZone, elapsed, s.gkProfile.barPeriodMs),
         };
 
         if (s.phase !== 'simulating') {
@@ -229,7 +239,8 @@ export function useSoccerEngine() {
           s.characters,
           s.field,
           s.gkBars,
-          elapsed
+          elapsed,
+          s.gkProfile.barPeriodMs
         );
 
         if (events.kicked) {
