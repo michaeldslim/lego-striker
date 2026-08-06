@@ -10,4 +10,5 @@ export const gameMessages = {
   kickoff: () => i18n.t('game.kickoff'),
   victory: () => i18n.t('game.victory'),
   defeat: () => i18n.t('game.defeat'),
+  curve: () => i18n.t('game.curve'),
 };

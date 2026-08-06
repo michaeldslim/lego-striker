@@ -21,6 +21,7 @@ export type FeedbackEvent =
   | 'select'
   | 'flick'
   | 'super'
+  | 'curve'
   | 'kick'
   | 'wall'
   | 'char_bump'
@@ -42,6 +43,7 @@ const GameFeedbackContext = createContext<GameFeedbackContextValue | null>(null)
 const EVENT_SFX: Partial<Record<FeedbackEvent, SfxId>> = {
   kick: 'kick',
   super: 'super',
+  curve: 'super',
   save: 'save',
   goal: 'goal',
   goal_against: 'goal_against',
@@ -113,6 +115,9 @@ export function GameFeedbackProvider({ children }: { children: React.ReactNode }
         case 'super':
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           break;
+        case 'curve':
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
+          break;
         case 'kick':
           if (kickPower >= 0.75) {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
@@ -154,7 +159,8 @@ export function GameFeedbackProvider({ children }: { children: React.ReactNode }
 
       const sfxId = EVENT_SFX[event];
       if (sfxId) {
-        const powerScale = event === 'kick' ? 0.6 + kickPower * 0.4 : 1;
+        const powerScale =
+          event === 'kick' ? 0.6 + kickPower * 0.4 : event === 'curve' ? 0.75 : 1;
         playSfx(sfxId, powerScale);
       }
     },

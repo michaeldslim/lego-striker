@@ -79,6 +79,7 @@ export interface SoccerState {
   playerColors: TeamColors;
   aiColors: TeamColors;
   gkProfile: GkDifficultyProfile;
+  gkDifficulty: GkDifficulty;
   message: string | null;
   lastGoalScorer: 'player' | 'ai' | null;
 }
@@ -122,6 +123,7 @@ function buildInitialState(
     playerColors,
     aiColors,
     gkProfile,
+    gkDifficulty,
     message: null,
     lastGoalScorer: null,
   };
@@ -167,9 +169,13 @@ export function useSoccerEngine() {
         s.activeCharacterId != null
           ? s.characters.find((ch) => ch.id === s.activeCharacterId) ?? pickAiCharacter(s.characters, s.ball)
           : pickAiCharacter(s.characters, s.ball);
-      const flick = computeAiFlick(aiChar, s.ball);
+      const flick = computeAiFlick(aiChar, s.ball, {
+        gkBarY: s.gkBarYs.player,
+        goalZone: s.field.goalZone,
+        gkDifficulty: s.gkDifficulty,
+      });
       const characters = s.characters.map((ch) =>
-        ch.id === aiChar.id ? { ...ch, vx: flick.vx, vy: flick.vy } : ch
+        ch.id === aiChar.id ? { ...ch, vx: flick.vx, vy: flick.vy, curveKick: flick.curveKick } : ch
       );
 
       return {
@@ -215,8 +221,10 @@ export function useSoccerEngine() {
     const tick = (now: number) => {
       if (!running) return;
 
+      let deltaMs = 16;
       if (lastTickRef.current !== null) {
-        elapsedRef.current += now - lastTickRef.current;
+        deltaMs = Math.min(now - lastTickRef.current, 32);
+        elapsedRef.current += deltaMs;
       }
       lastTickRef.current = now;
       const elapsed = elapsedRef.current;
@@ -240,10 +248,13 @@ export function useSoccerEngine() {
           s.field,
           s.gkBars,
           elapsed,
-          s.gkProfile.barPeriodMs
+          s.gkProfile.barPeriodMs,
+          deltaMs
         );
 
-        if (events.kicked) {
+        if (events.curved) {
+          feedbackRef.current('curve', { kickPower: events.kickPower });
+        } else if (events.kicked) {
           feedbackRef.current('kick', { kickPower: events.kickPower });
         }
         if (events.wallBounce) {
@@ -269,6 +280,13 @@ export function useSoccerEngine() {
               });
             }, SAVE_MESSAGE_MS);
           }
+        }
+
+        let message = s.message;
+        if (events.curved) {
+          message = gameMessages.curve();
+        } else if (events.saved) {
+          message = gameMessages.save();
         }
 
         if (goal) {
@@ -303,10 +321,11 @@ export function useSoccerEngine() {
         if (allSettled(ball, characters)) {
           const nextTurn = s.turn === 'player' ? 'ai' : 'player';
           feedbackRef.current('turn');
+          const clearedChars = characters.map((ch) => ({ ...ch, curveKick: undefined }));
           return {
             ...s,
             ball,
-            characters,
+            characters: clearedChars,
             gkBarYs,
             phase: 'aiming',
             turn: nextTurn,
@@ -329,7 +348,7 @@ export function useSoccerEngine() {
           ball,
           characters,
           gkBarYs,
-          message: events.saved ? gameMessages.save() : s.message,
+          message,
         };
       });
 
@@ -445,7 +464,7 @@ export function useSoccerEngine() {
         return clearAimState(s);
       }
 
-      const { power, isSuper, angle } = computeAimPower(
+      const { power, isSuper, isCurveEligible, curveDirection, curveStrength, angle } = computeAimPower(
         activeChar,
         s.aimCurrent,
         elapsedMs,
@@ -460,14 +479,21 @@ export function useSoccerEngine() {
       const vx = Math.cos(angle) * power;
       const vy = Math.sin(angle) * power;
 
-      if (isSuper) {
+      if (isSuper && !isCurveEligible) {
         feedbackRef.current('super');
       } else {
         feedbackRef.current('flick');
       }
 
+      const curveKick =
+        isCurveEligible && curveDirection
+          ? { direction: curveDirection, strength: curveStrength }
+          : undefined;
+
       const characters = s.characters.map((ch) =>
-        ch.id === s.activeCharacterId ? { ...ch, vx, vy } : ch
+        ch.id === s.activeCharacterId
+          ? { ...ch, vx, vy, curveKick }
+          : { ...ch, curveKick: undefined }
       );
 
       return {
