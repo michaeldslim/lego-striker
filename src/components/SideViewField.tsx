@@ -202,7 +202,28 @@ export function SideViewField({
           />
         </G>
 
-        <SoccerBall x={ball.x} y={ball.y} radius={ball.radius} variant={ballSkin} />
+        {ball.curveTrail.length > 1 &&
+          ball.curveTrail.map((pt, i) => {
+            const t = i / (ball.curveTrail.length - 1);
+            return (
+              <Circle
+                key={`curve-trail-${i}`}
+                cx={pt.x}
+                cy={pt.y}
+                r={ball.radius * (0.25 + t * 0.5)}
+                fill={colors.neonPink}
+                opacity={0.12 + t * 0.45}
+              />
+            );
+          })}
+
+        <SoccerBall
+          x={ball.x}
+          y={ball.y}
+          radius={ball.radius}
+          variant={ballSkin}
+          curving={ball.curveRemainingMs > 0}
+        />
 
         {characters.map((ch) => {
           const isPlayerCharging =
@@ -237,6 +258,9 @@ export function SideViewField({
             angle={aimPower.angle}
             ratio={aimPower.ratio}
             cancelling={aimPower.cancelling}
+            curveEligible={aimPower.isCurveEligible}
+            curveDirection={aimPower.curveDirection}
+            curveStrength={aimPower.curveStrength}
           />
         )}
       </Svg>

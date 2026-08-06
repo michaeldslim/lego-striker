@@ -3,6 +3,7 @@ import { Circle, G, Line, Polygon, Text as SvgText } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 import { CANCEL_AIM_RADIUS, SUPER_POWER_RATIO } from '../constants/game';
 import { colors } from '../constants/theme';
+import { CurveDirection } from '../types/game';
 import { powerGaugeColor } from '../utils/power';
 
 interface Props {
@@ -11,6 +12,9 @@ interface Props {
   angle: number;
   ratio: number;
   cancelling?: boolean;
+  curveEligible?: boolean;
+  curveDirection?: CurveDirection | null;
+  curveStrength?: number;
 }
 
 /** 취소 존보다 큰 파워 레인지 원 */
@@ -38,18 +42,36 @@ function aimArrowPoints(x: number, y: number, angle: number, tipDist: number): s
   return `${tipX},${tipY} ${x1},${y1} ${x2},${y2}`;
 }
 
-export function PowerGauge({ x, y, angle, ratio, cancelling = false }: Props) {
+export function PowerGauge({
+  x,
+  y,
+  angle,
+  ratio,
+  cancelling = false,
+  curveEligible = false,
+  curveDirection = null,
+  curveStrength = 0,
+}: Props) {
   const { t } = useTranslation();
   const gaugeColor = cancelling ? colors.neonPink : powerGaugeColor(ratio);
   const isSuper = !cancelling && ratio >= SUPER_POWER_RATIO;
+  const showCurve = curveEligible && curveDirection !== null && !cancelling;
 
   const aimEndX = x + Math.cos(angle) * AIM_LINE_LENGTH;
   const aimEndY = y + Math.sin(angle) * AIM_LINE_LENGTH;
+  const aimPowerLen = AIM_LINE_LENGTH * (0.25 + ratio * 0.75);
+  const aimTipX = x + Math.cos(angle) * aimPowerLen;
+  const aimTipY = y + Math.sin(angle) * aimPowerLen;
+
+  // 커브 힌트: 조준선 옆 작은 화살표 (조준선 자체는 직선 유지)
+  const curveOffset = (curveDirection ?? 1) * (14 + curveStrength * 10);
+  const perpAngle = angle + Math.PI / 2;
+  const curveBadgeX = aimTipX + Math.cos(perpAngle) * curveOffset * 0.35;
+  const curveBadgeY = aimTipY + Math.sin(perpAngle) * curveOffset * 0.35;
 
   if (cancelling) {
     return (
       <G>
-        {/* 파워 레인지 (취소 중에도 바깥 원 유지) */}
         <Circle
           cx={x}
           cy={y}
@@ -85,7 +107,6 @@ export function PowerGauge({ x, y, angle, ratio, cancelling = false }: Props) {
 
   return (
     <G>
-      {/* 파워 레인지 — 바깥 원형 트랙 */}
       <Circle
         cx={x}
         cy={y}
@@ -95,7 +116,6 @@ export function PowerGauge({ x, y, angle, ratio, cancelling = false }: Props) {
         strokeWidth={POWER_RING_WIDTH}
       />
 
-      {/* SUPER 구간 (원 둘레 상단 구간) */}
       <Circle
         cx={x}
         cy={y}
@@ -108,7 +128,6 @@ export function PowerGauge({ x, y, angle, ratio, cancelling = false }: Props) {
         transform={`rotate(-90 ${x} ${y})`}
       />
 
-      {/* 현재 파워 채움 — 원형 */}
       {ratio > 0.01 && (
         <Circle
           cx={x}
@@ -124,7 +143,6 @@ export function PowerGauge({ x, y, angle, ratio, cancelling = false }: Props) {
         />
       )}
 
-      {/* 취소 존 안내 (안쪽 작은 원) */}
       <Circle
         cx={x}
         cy={y}
@@ -146,19 +164,18 @@ export function PowerGauge({ x, y, angle, ratio, cancelling = false }: Props) {
         strokeDasharray="6,5"
       />
 
-      {/* 킥 방향 — 현재 파워 길이 */}
+      {/* 킥 방향 — 현재 파워 길이 (항상 직선) */}
       <Line
         x1={x}
         y1={y}
-        x2={x + Math.cos(angle) * AIM_LINE_LENGTH * (0.25 + ratio * 0.75)}
-        y2={y + Math.sin(angle) * AIM_LINE_LENGTH * (0.25 + ratio * 0.75)}
+        x2={aimTipX}
+        y2={aimTipY}
         stroke={gaugeColor}
         strokeWidth={2.5 + ratio * 3}
         strokeLinecap="round"
         opacity={0.95}
       />
 
-      {/* 방향 화살표 */}
       <Polygon
         points={aimArrowPoints(x, y, angle, AIM_LINE_LENGTH)}
         fill={gaugeColor}
@@ -175,7 +192,44 @@ export function PowerGauge({ x, y, angle, ratio, cancelling = false }: Props) {
         opacity={0.85}
       />
 
-      {isSuper && (
+      {/* 커브 힌트 — 조준선 옆 작은 배지 (조준 왜곡 없음) */}
+      {showCurve && (
+        <G>
+          <Line
+            x1={aimTipX}
+            y1={aimTipY}
+            x2={curveBadgeX}
+            y2={curveBadgeY}
+            stroke={colors.neonPink}
+            strokeWidth={2}
+            strokeDasharray="3,3"
+            opacity={0.8}
+          />
+          <Polygon
+            points={aimArrowPoints(
+              curveBadgeX - Math.cos(angle) * 8,
+              curveBadgeY - Math.sin(angle) * 8,
+              angle + (curveDirection === -1 ? -Math.PI / 2 : Math.PI / 2),
+              12
+            )}
+            fill={colors.neonPink}
+            opacity={0.9}
+          />
+          <SvgText
+            x={x}
+            y={y - POWER_RING_RADIUS - 10}
+            fill={colors.neonPink}
+            fontSize={11}
+            fontWeight="900"
+            textAnchor="middle"
+            alignmentBaseline="middle"
+          >
+            {t('game.curve')}
+          </SvgText>
+        </G>
+      )}
+
+      {isSuper && !showCurve && (
         <SvgText
           x={x}
           y={y - POWER_RING_RADIUS - 10}

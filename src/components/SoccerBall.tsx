@@ -16,6 +16,7 @@ interface Props {
   y: number;
   radius: number;
   variant?: BallSkin;
+  curving?: boolean;
 }
 
 const BASE_RADIUS = 18;
@@ -206,12 +207,23 @@ function BallBody({ variant }: { variant: BallSkin }) {
   }
 }
 
-export function SoccerBall({ x, y, radius, variant = 'legacy' }: Props) {
+export function SoccerBall({ x, y, radius, variant = 'legacy', curving = false }: Props) {
   const scale = radius / BASE_RADIUS;
 
   return (
     <G>
       <BallShadow x={x} y={y} radius={radius} />
+      {curving && (
+        <Circle
+          cx={x}
+          cy={y}
+          r={radius * 1.55}
+          fill="none"
+          stroke="#ff2d78"
+          strokeWidth={3}
+          opacity={0.7}
+        />
+      )}
       <G transform={`translate(${x}, ${y}) scale(${scale})`}>
         <BallBody variant={variant} />
       </G>
