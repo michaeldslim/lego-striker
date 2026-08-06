@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import i18n from '../i18n';
+import { DEFAULT_GK_DIFFICULTY, GkDifficulty } from '../constants/gkDifficulty';
 import { AppLanguage } from '../types/settings';
 import { loadPreferences, savePreferences } from '../utils/storage';
 
@@ -10,11 +11,13 @@ interface SettingsContextValue {
   language: AppLanguage;
   soundEnabled: boolean;
   hapticsEnabled: boolean;
+  gkDifficulty: GkDifficulty;
   setBgmEnabled: (enabled: boolean) => void;
   setBgmVolumeLevel: (level: number) => void;
   setLanguage: (language: AppLanguage) => void;
   setSoundEnabled: (enabled: boolean) => void;
   setHapticsEnabled: (enabled: boolean) => void;
+  setGkDifficulty: (difficulty: GkDifficulty) => void;
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -26,6 +29,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<AppLanguage>('en');
   const [soundEnabled, setSoundEnabledState] = useState(true);
   const [hapticsEnabled, setHapticsEnabledState] = useState(true);
+  const [gkDifficulty, setGkDifficultyState] = useState<GkDifficulty>(DEFAULT_GK_DIFFICULTY);
 
   useEffect(() => {
     loadPreferences().then((prefs) => {
@@ -34,6 +38,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       setLanguageState(prefs.language);
       setSoundEnabledState(prefs.soundEnabled);
       setHapticsEnabledState(prefs.hapticsEnabled);
+      setGkDifficultyState(prefs.gkDifficulty);
       void i18n.changeLanguage(prefs.language);
       setReady(true);
     });
@@ -65,6 +70,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     void savePreferences({ hapticsEnabled: enabled });
   }, []);
 
+  const setGkDifficulty = useCallback((difficulty: GkDifficulty) => {
+    setGkDifficultyState(difficulty);
+    void savePreferences({ gkDifficulty: difficulty });
+  }, []);
+
   const value = useMemo(
     () => ({
       ready,
@@ -73,11 +83,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       language,
       soundEnabled,
       hapticsEnabled,
+      gkDifficulty,
       setBgmEnabled,
       setBgmVolumeLevel,
       setLanguage,
       setSoundEnabled,
       setHapticsEnabled,
+      setGkDifficulty,
     }),
     [
       ready,
@@ -86,11 +98,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       language,
       soundEnabled,
       hapticsEnabled,
+      gkDifficulty,
       setBgmEnabled,
       setBgmVolumeLevel,
       setLanguage,
       setSoundEnabled,
       setHapticsEnabled,
+      setGkDifficulty,
     ]
   );
 

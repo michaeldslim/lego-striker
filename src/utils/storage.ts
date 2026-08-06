@@ -6,6 +6,7 @@ import {
   BGM_VOLUME_MAX_LEVEL,
 } from '../constants/audio';
 import { DEFAULT_SQUAD_SIZE, LEADERBOARD_SIZE } from '../constants/game';
+import { DEFAULT_GK_DIFFICULTY, GkDifficulty, parseGkDifficulty } from '../constants/gkDifficulty';
 import { DEFAULT_BALL_SKIN, DEFAULT_COUNTRY, DEFAULT_PLAYER_COLORS, parseBallSkin, parseCountryCode } from '../constants/skins';
 import { getDeviceLanguage } from '../i18n';
 import { BallSkin, CountryCode, TeamColors } from '../types/customize';
@@ -26,6 +27,7 @@ export interface GamePreferences {
   language: AppLanguage;
   soundEnabled: boolean;
   hapticsEnabled: boolean;
+  gkDifficulty: GkDifficulty;
 }
 
 const DEFAULT_PREFS: GamePreferences = {
@@ -38,6 +40,7 @@ const DEFAULT_PREFS: GamePreferences = {
   language: getDeviceLanguage(),
   soundEnabled: DEFAULT_SOUND_ENABLED,
   hapticsEnabled: DEFAULT_HAPTICS_ENABLED,
+  gkDifficulty: DEFAULT_GK_DIFFICULTY,
 };
 
 function isValidHex(color: unknown): color is string {
@@ -87,6 +90,7 @@ export async function loadPreferences(): Promise<GamePreferences> {
         language: parseLanguage(parsed.language),
         soundEnabled: parsed.soundEnabled !== false,
         hapticsEnabled: parsed.hapticsEnabled !== false,
+        gkDifficulty: parseGkDifficulty(parsed.gkDifficulty),
       };
     }
   } catch {
@@ -104,6 +108,7 @@ export async function loadPreferences(): Promise<GamePreferences> {
     language: DEFAULT_PREFS.language,
     soundEnabled: DEFAULT_PREFS.soundEnabled,
     hapticsEnabled: DEFAULT_PREFS.hapticsEnabled,
+    gkDifficulty: DEFAULT_PREFS.gkDifficulty,
   };
 }
 
@@ -123,6 +128,8 @@ export async function savePreferences(patch: Partial<GamePreferences>): Promise<
     soundEnabled: patch.soundEnabled !== undefined ? patch.soundEnabled : current.soundEnabled,
     hapticsEnabled:
       patch.hapticsEnabled !== undefined ? patch.hapticsEnabled : current.hapticsEnabled,
+    gkDifficulty:
+      patch.gkDifficulty !== undefined ? parseGkDifficulty(patch.gkDifficulty) : current.gkDifficulty,
   };
   await AsyncStorage.setItem(PREFS_KEY, JSON.stringify(updated));
   await AsyncStorage.setItem(SQUAD_SIZE_KEY, String(updated.squadSize));
