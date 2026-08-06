@@ -73,7 +73,7 @@ A **2D side-view flick soccer** game in the Football Striker style. Flick Lego m
 
 - Selections persist via `loadPreferences` / `savePreferences` (`AsyncStorage`)
 - Hero content max width ~280px; action buttons stretch full hero width
-- **v2**: GK difficulty in **Settings** ✅ · field theme still pending (home menu column full)
+- **v2**: GK difficulty in **Settings** ✅ · field theme in **Settings** ✅
 - Implemented in `app/index.tsx`
 
 ### Settings Screen (`app/settings.tsx`)
@@ -88,12 +88,12 @@ Landscape-friendly two-column layout (header + scrollable options panel).
 | **Haptics** | Toggle on/off — persisted as `hapticsEnabled` |
 | **Language** | **KO / EN** segmented toggle — persisted as `language`; drives `i18next` |
 | **GK difficulty** | ✅ **Easy / Normal / Hard** segmented toggle in **Match** card — persisted as `gkDifficulty` |
-| **Field theme** *(v2 pending)* | **Day / Night / Indoor** segmented toggle or compact thumbnails — persisted as `fieldTheme` |
+| **Field theme** | ✅ **Day / Night / Indoor** segmented toggle in **Match** card — persisted as `fieldTheme` |
 
 - BGM: `assets/sounds/playing.mp3` looped via `BackgroundMusic` in root layout
-- Settings state: `SettingsContext` + `loadPreferences` / `savePreferences` (includes `gkDifficulty`; `fieldTheme` when field themes ship)
+- Settings state: `SettingsContext` + `loadPreferences` / `savePreferences` (includes `gkDifficulty`, `fieldTheme`)
 - Default BGM volume level: **2** (~20%)
-- **Match** card below Language — GK difficulty row ✅; field theme row when implemented
+- **Match** card below Language — GK difficulty row ✅; field theme row ✅
 
 ### Localization (i18n)
 
@@ -542,15 +542,15 @@ Alternate **grass / stadium** looks — visual only; physics and hitboxes unchan
 
 **Field themes**
 
-- [ ] `FieldTheme` type + `FIELD_THEMES` color maps
-- [ ] `SideViewField` theme variants (day / night / indoor)
-- [ ] `fieldTheme` preference + persistence
-- [ ] Settings **Match** card theme picker + i18n
-- [ ] Apply theme in game screen
+- [x] `FieldTheme` type + `FIELD_THEMES` color maps
+- [x] `SideViewField` theme variants (day / night / indoor)
+- [x] `fieldTheme` preference + persistence
+- [x] Settings **Match** card theme picker + i18n
+- [x] Apply theme in game screen
 
 **Docs**
 
-- [ ] `game-plan` / types / constants updated
+- [x] `game-plan` / types / constants updated
 
 ---
 
@@ -564,7 +564,7 @@ Alternate **grass / stadium** looks — visual only; physics and hitboxes unchan
 | **v1.3** | Hold charging, circular power/aim UI, cancel, kick-ready pose, AI wind-up | ✅ Done |
 | **v1.4** | Uniform colors, ball design, country selection, field flag & home layout | ✅ Done |
 | **v1.5** | BGM + settings + i18n; SFX, haptic extensions, sound/haptics toggles | ✅ Done |
-| **v2** | GK difficulty ✅ · curve special shots ✅ · field themes (day / night / indoor) | In progress |
+| **v2** | GK difficulty ✅ · curve special shots ✅ · field themes (day / night / indoor) ✅ | Done |
 
 **Out of scope (not planned)**: 2P local, online multiplayer
 

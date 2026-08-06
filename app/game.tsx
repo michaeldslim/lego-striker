@@ -10,8 +10,10 @@ import { useScreenPadding } from '../src/hooks/useScreenPadding';
 import { useSoccerEngine } from '../src/hooks/useSoccerEngine';
 import { GOALS_TO_WIN } from '../src/constants/game';
 import { DEFAULT_GK_DIFFICULTY } from '../src/constants/gkDifficulty';
+import { DEFAULT_FIELD_THEME } from '../src/constants/fieldThemes';
 import { DEFAULT_BALL_SKIN, DEFAULT_COUNTRY, DEFAULT_PLAYER_COLORS, pickRandomCountry } from '../src/constants/skins';
 import { spacing } from '../src/constants/theme';
+import { useSettings } from '../src/contexts/SettingsContext';
 import { BallSkin, CountryCode, TeamColors } from '../src/types/customize';
 import { SquadSize } from '../src/types/game';
 import { loadPreferences } from '../src/utils/storage';
@@ -26,6 +28,7 @@ export default function GameScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ squadSize?: string }>();
   const squadSize = parseSquadSize(params.squadSize);
+  const { fieldTheme } = useSettings();
   const { state, startGame, onAimStart, onAimMove, onAimEnd, onAimCancel, getResult } = useSoccerEngine();
   const navigatedRef = useRef(false);
   const gameInitRef = useRef(false);
@@ -175,6 +178,7 @@ export default function GameScreen() {
                   turn={state.turn}
                   phase={state.phase}
                   ballSkin={ballSkin}
+                  theme={fieldTheme ?? DEFAULT_FIELD_THEME}
                   playerCountryCode={countryCode}
                   aiCountryCode={aiCountryCode}
                 />
